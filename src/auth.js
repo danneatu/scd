@@ -89,6 +89,9 @@ const PUBLIC_PATHS = new Set([
   '/api/login',
   '/api/logout',
   '/favicon.ico',
+  '/icon.png',
+  '/icon.svg',
+  '/apple-touch-icon.png',
 ]);
 
 /**
