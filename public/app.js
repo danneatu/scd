@@ -275,8 +275,15 @@ function switchTab(tab, { persist = true } = {}) {
 
 function updateLangToggle() {
   if (!els.langToggle) return;
+  const lang = getLang() === 'de' ? 'de' : 'en';
+  // Highlight the active segment in the EN / DE switch.
+  const segs = els.langToggle.querySelectorAll('.lang-seg');
+  if (segs.length) {
+    segs.forEach((seg) => seg.classList.toggle('active', seg.dataset.lang === lang));
+  }
+  // Back-compat: simple single-label variant (mobile dropdown).
   const label = els.langToggle.querySelector('.lang-toggle-label');
-  if (label) label.textContent = getLang() === 'de' ? 'DE' : 'EN';
+  if (label) label.textContent = lang === 'de' ? 'DE' : 'EN';
 }
 
 function toggleLang() {
