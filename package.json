@@ -1,0 +1,25 @@
+{
+  "name": "app-ratings-analyzer",
+  "version": "1.0.0",
+  "description": "Fetch and analyze App Store customer reviews via the App Store Connect API.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "migrate:pg": "node scripts/migrate-sqlite-to-postgres.mjs",
+    "job:daily": "node scripts/daily-job.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "node-cron": "^4.4.1",
+    "nodemailer": "^6.10.1",
+    "pg": "^8.22.0",
+    "tesseract.js": "^7.0.0"
+  }
+}

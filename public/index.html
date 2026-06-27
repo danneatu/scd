@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>App Ratings Analyzer</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      // Apply the saved theme + language before first paint to avoid a flash.
+      (function () {
+        try {
+          var t = localStorage.getItem('theme') || 'dark';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        try {
+          var l = localStorage.getItem('lang');
+          if (l !== 'en' && l !== 'de') {
+            l = (navigator.language || '').toLowerCase().indexOf('de') === 0 ? 'de' : 'en';
+          }
+          document.documentElement.setAttribute('lang', l);
+        } catch (e) {
+          document.documentElement.setAttribute('lang', 'en');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-text">
+        <h1 data-i18n="appTitle">App Ratings Analyzer</h1>
+        <p class="subtitle" data-i18n="appSubtitle">Customer reviews via the App Store Connect API</p>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" id="langToggle" class="theme-toggle" title="English / Deutsch" aria-label="Switch language">
+          <span class="lang-toggle-icon">🌐</span>
+          <span class="lang-toggle-label">EN</span>
+        </button>
+        <button type="button" id="themeToggle" class="theme-toggle" title="Toggle light / dark mode" aria-label="Toggle light or dark mode">
+          <span class="theme-toggle-icon">🌙</span>
+          <span class="theme-toggle-label">Dark</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="config-warning" class="banner banner--warn hidden" data-i18n-html="configWarning">
+        <strong>Credentials not configured.</strong>
+        Add your <code>ASC_ISSUER_ID</code>, <code>ASC_KEY_ID</code>, and private key
+        to a <code>.env</code> file (see <code>.env.example</code>), then restart the server.
+      </section>
+
+      <!-- ===================== Monthly Dashboard ===================== -->
+      <section class="dashboard">
+        <div class="dash-controls">
+          <button type="button" id="syncAllBtn" data-i18n="btnSync">Sync</button>
+          <button type="button" id="notifyTestBtn" class="ghost hidden" data-i18n="btnTestEmail">Test email</button>
+          <span id="sourceBadge" class="badge hidden"></span>
+        </div>
+        <p id="dashMeta" class="dash-meta"></p>
+
+        <section id="dashStatus" class="status hidden"></section>
+
+        <!-- View tabs: Ratings & reviews vs. Downloads & adoption -->
+        <div id="dashTabs" class="dash-tabs" role="tablist">
+          <button type="button" class="dash-tab dash-tab--active" id="tabBtnRatings" role="tab" aria-selected="true" data-tab="ratings" data-i18n="tabRatings">Ratings &amp; reviews</button>
+          <button type="button" class="dash-tab" id="tabBtnDownloads" role="tab" aria-selected="false" data-tab="downloads" data-i18n="tabDownloads">Downloads &amp; adoption</button>
+        </div>
+
+        <div id="tabRatings" class="tab-panel" role="tabpanel">
+        <!-- All-time ratings overview (incl. star-only ratings) -->
+        <section id="ratingsPanel" class="panel hidden">
+          <div class="panel-head">
+            <h2 data-i18n="ratingsOverviewTitle">Ratings overview (all storefronts)</h2>
+          </div>
+          <p class="panel-note" data-i18n-html="ratingsOverviewNote">
+            All-time totals from the public App Store, including <strong>star-only ratings</strong>
+            (which the written-reviews API never returns).
+          </p>
+          <div id="ratingsSummary" class="summary"></div>
+          <div id="ratingsSplit" class="ratings-split"></div>
+          <details id="ratingsByCountry" class="ratings-countries">
+            <summary data-i18n="topStorefronts">Top storefronts by ratings</summary>
+            <div id="ratingsCountryList" class="ratings-country-list"></div>
+          </details>
+        </section>
+
+        <!-- Ratings over time (snapshots) -->
+        <section id="ratingsHistoryPanel" class="panel hidden">
+          <div class="panel-head">
+            <h2 data-i18n="ratingsOverTimeTitle">Ratings over time</h2>
+          </div>
+          <p class="panel-note" id="ratingsHistoryNote" data-i18n="ratingsHistoryDefaultNote">
+            Compares the earliest stored snapshot with the latest. Today's total is captured
+            automatically each time ratings load, so the comparison grows over time.
+          </p>
+          <div id="ratingsPeriods" class="ratings-periods"></div>
+          <div id="ratingsStarDeltas" class="ratings-star-deltas"></div>
+
+          <!-- Daily written-review volume (stacked by star) + release marker -->
+          <div id="reviewsTimeline" class="reviews-timeline hidden">
+            <div class="rt-head">
+              <h3 data-i18n="reviewsPerDayTitle">Written reviews per day</h3>
+              <div class="rt-controls">
+                <select id="reviewsTimelineRange" class="rt-range" title="Time range">
+                  <option value="90" selected data-i18n="range90">Last 90 days</option>
+                  <option value="180" data-i18n="range180">Last 180 days</option>
+                  <option value="365" data-i18n="range365">Last year</option>
+                </select>
+              </div>
+            </div>
+            <p class="panel-note" id="reviewsTimelineNote"></p>
+            <div id="reviewsTimelineChart" class="rt-chart"></div>
+            <div class="rt-legend">
+              <span class="rt-leg rt-leg-5"><i></i>5★</span>
+              <span class="rt-leg rt-leg-4"><i></i>4★</span>
+              <span class="rt-leg rt-leg-3"><i></i>3★</span>
+              <span class="rt-leg rt-leg-2"><i></i>2★</span>
+              <span class="rt-leg rt-leg-1"><i></i>1★</span>
+              <span class="rt-leg rt-leg-rel"><i></i><span data-i18n="release">Release</span></span>
+            </div>
+          </div>
+
+          <div id="ratingsBaselineDist" class="ratings-baseline-dist"></div>
+          <details id="starEditor" class="star-editor" open>
+            <summary data-i18n="starEditorTitle">Update star breakdown (from App Store Connect)</summary>
+            <p class="panel-note" data-i18n-html="starEditorNote">
+              Apple's API doesn't expose the 5★…1★ split, so add it here. Upload
+              <strong>or just paste a screenshot</strong> (⌘V / Ctrl+V) of the App Store Connect
+              ratings popover to auto-fill (read locally, never uploaded anywhere) — then confirm and save.
+            </p>
+
+            <div class="se-upload">
+              <label class="se-file-btn">
+                <input type="file" id="starShotInput" accept="image/*" hidden />
+                <span data-i18n="uploadScreenshot">Upload screenshot</span>
+              </label>
+              <span class="se-paste-hint" data-i18n="orPaste">or paste (⌘V / Ctrl+V)</span>
+              <span id="starShotStatus" class="se-shot-status"></span>
+            </div>
+
+            <div class="se-grid">
+              <label class="se-row"><span>5 ★</span><input type="number" id="star5" min="0" step="1" inputmode="numeric" /></label>
+              <label class="se-row"><span>4 ★</span><input type="number" id="star4" min="0" step="1" inputmode="numeric" /></label>
+              <label class="se-row"><span>3 ★</span><input type="number" id="star3" min="0" step="1" inputmode="numeric" /></label>
+              <label class="se-row"><span>2 ★</span><input type="number" id="star2" min="0" step="1" inputmode="numeric" /></label>
+              <label class="se-row"><span>1 ★</span><input type="number" id="star1" min="0" step="1" inputmode="numeric" /></label>
+            </div>
+
+            <div class="se-foot">
+              <label class="se-date"><span data-i18n="date">Date</span> <input type="date" id="starDate" /></label>
+              <span id="starTotals" class="se-totals">Total: — · Avg: —</span>
+              <button type="button" id="starSaveBtn" data-i18n="saveSnapshot" disabled>Save snapshot</button>
+            </div>
+            <p id="starEditorMsg" class="se-msg"></p>
+          </details>
+          <details id="ratingsTimeline" class="ratings-countries">
+            <summary data-i18n="snapshotHistory">Snapshot history</summary>
+            <div id="ratingsTimelineList" class="ratings-timeline-list"></div>
+          </details>
+        </section>
+
+        <!-- AI / heuristic monthly report -->
+        <section id="report" class="panel hidden">
+          <div class="panel-head">
+            <h2 id="reportTitle" data-i18n="monthlyInsights">Monthly insights</h2>
+            <span id="reportSource" class="report-source"></span>
+          </div>
+          <p id="reportSummary" class="report-summary"></p>
+
+          <div class="insight-grid">
+            <div class="insight-col">
+              <h3 class="insight-h insight-h--bad" data-i18n="painTitle">😖 Biggest pain points</h3>
+              <ul id="painList" class="insight-list"></ul>
+            </div>
+            <div class="insight-col">
+              <h3 class="insight-h insight-h--good" data-i18n="praiseTitle">😊 What users love</h3>
+              <ul id="praiseList" class="insight-list"></ul>
+            </div>
+          </div>
+
+          <div id="actionsBlock" class="actions-block hidden">
+            <h3 class="insight-h" data-i18n="actionsTitle">✅ Suggested actions</h3>
+            <ul id="actionsList" class="actions-list"></ul>
+          </div>
+        </section>
+
+        <!-- Written reviews: day-by-day listing + monthly overview + PDF export -->
+        <section id="writtenPanel" class="panel hidden">
+          <div class="panel-head">
+            <h2 data-i18n="writtenReviewsTitle">Written reviews</h2>
+            <div class="panel-head-actions">
+              <button type="button" id="writtenPdfBtn" data-i18n="exportPdf">Export PDF</button>
+            </div>
+          </div>
+          <p class="panel-note" id="writtenNote" data-i18n="writtenDefaultNote">
+            Day-by-day listing of written reviews, with a multi-month overview and a
+            printable monthly report. Synced automatically every day.
+          </p>
+          <div id="writtenMonthPicker" class="written-month-picker"></div>
+          <div id="writtenOverview" class="written-overview"></div>
+          <div id="writtenAnalysis" class="written-analysis hidden"></div>
+          <div id="writtenDays" class="written-days"></div>
+        </section>
+        </div><!-- /#tabRatings -->
+
+        <div id="tabDownloads" class="tab-panel hidden" role="tabpanel">
+        <!-- Version adoption (Sales Reports) -->
+        <section id="versionPanel" class="panel hidden">
+          <div class="panel-head">
+            <h2 data-i18n="versionTitle">Latest version adoption</h2>
+          </div>
+          <p class="panel-note" id="versionNote" data-i18n="versionDefaultNote">
+            How many devices have moved onto the latest version vs. the total install base.
+          </p>
+          <div id="versionLatest" class="version-latest"></div>
+        </section>
+
+        <!-- Downloads (Sales Reports) — shown last -->
+        <section id="downloadsPanel" class="panel hidden">
+          <div class="panel-head">
+            <h2 data-i18n="downloadsTitle">Downloads</h2>
+          </div>
+          <p class="panel-note" id="downloadsNote" data-i18n-html="downloadsDefaultNote">
+            First-time app downloads from App Store Connect <strong>Sales Reports</strong>.
+          </p>
+          <div id="downloadsSummary" class="summary"></div>
+          <details id="downloadsByCountry" class="ratings-countries">
+            <summary data-i18n="topCountries">Top countries by downloads</summary>
+            <div id="downloadsCountryList" class="ratings-country-list"></div>
+          </details>
+        </section>
+        </div><!-- /#tabDownloads -->
+      </section>
+    </main>
+
+    <script src="i18n.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

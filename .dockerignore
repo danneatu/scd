@@ -1,0 +1,22 @@
+# Never ship secrets, local data, or build cruft into the image.
+node_modules
+npm-debug.log*
+
+# Secrets (provide these as platform environment variables instead).
+.env
+.env.*
+!.env.example
+*.p8
+AuthKey_*.p8
+
+# Local SQLite data + scratch (production uses Postgres).
+data/
+*.db
+
+# Tooling / VCS / docs.
+.git
+.gitignore
+.DS_Store
+supabase/functions/.env
+Dockerfile
+.dockerignore

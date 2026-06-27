@@ -1,0 +1,65 @@
+name: Daily review sync + report
+
+# Runs the daily job on a free GitHub-hosted runner: sync reviews, capture the
+# ratings snapshot, generate + cache the LLM monthly report, and email new
+# written reviews. Writes to your Supabase Postgres, so no always-on server is
+# needed. You can also trigger it manually from the Actions tab.
+
+on:
+  schedule:
+    # 06:00 UTC daily. GitHub cron is UTC and may start a few minutes late.
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+# Avoid overlapping runs if a previous one is still going.
+concurrency:
+  group: daily-job
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --omit=dev
+
+      - name: Run daily job
+        env:
+          # Use Postgres so the Action and the dashboard share one database.
+          DB_DRIVER: postgres
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+          # App + App Store Connect (reviews).
+          APP_ID: ${{ secrets.APP_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+
+          # LLM (Groq free tier) — optional; falls back to the local heuristic.
+          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          REPORT_LANGUAGE: ${{ secrets.REPORT_LANGUAGE }}
+
+          # Email notifications (optional).
+          NOTIFY_TO: ${{ secrets.NOTIFY_TO }}
+          NOTIFY_FROM: ${{ secrets.NOTIFY_FROM }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+
+          # The runner has no .env / .p8 file; secrets come from env above.
+          ALLOW_INSECURE_KEY_PERMS: "1"
+        run: node scripts/daily-job.mjs

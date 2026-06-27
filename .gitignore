@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Secrets — never commit these
+.env
+.env.*
+!.env.example
+*.p8
+AuthKey_*.p8
+
+# Local data / build artifacts
+data/
+dist/
+
+# OS / logs
+.DS_Store
+npm-debug.log*
