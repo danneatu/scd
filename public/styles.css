@@ -37,12 +37,38 @@
   box-sizing: border-box;
 }
 
+/* Lock the page to vertical panning on touch devices: a swipe that isn't
+   perfectly vertical should NOT slide the whole page left/right. Horizontal
+   scrolling is re-enabled only inside designated containers (see .h-scroll /
+   the table + chart wrappers below). */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  /* Allow vertical scroll + pinch-zoom, but disallow horizontal panning of the
+     page itself. Gestures that begin inside an opted-in scroller still work,
+     because touch-action applies to the element the touch starts on. */
+  touch-action: pan-y pinch-zoom;
 }
+
+/* Opt-in horizontal scrollers: allow horizontal (and vertical) panning here,
+   and keep that scroll contained so it never chains out to move the page. */
+.h-scroll,
+.ratings-star-deltas,
+.daily-chart {
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 
 .topbar {
   padding: 24px 24px 8px;
