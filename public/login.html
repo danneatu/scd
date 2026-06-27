@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anmelden &middot; App Ratings Analyzer</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0e1117;
+        --card: #161b22;
+        --border: #30363d;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --accent: #2f81f7;
+        --accent-hover: #1f6feb;
+        --danger: #f85149;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(1200px 600px at 50% -10%, #1b2430 0%, var(--bg) 60%);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        padding: 24px;
+      }
+      .card {
+        width: 100%;
+        max-width: 360px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 32px 28px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 1.25rem;
+      }
+      p.sub {
+        margin: 0 0 24px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      input[type="password"] {
+        width: 100%;
+        padding: 11px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #0d1117;
+        color: var(--text);
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.15s ease;
+      }
+      input[type="password"]:focus {
+        border-color: var(--accent);
+      }
+      button {
+        margin-top: 18px;
+        width: 100%;
+        padding: 11px 12px;
+        border: none;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      button:hover { background: var(--accent-hover); }
+      button:disabled { opacity: 0.6; cursor: default; }
+      .error {
+        margin-top: 14px;
+        color: var(--danger);
+        font-size: 0.85rem;
+        min-height: 1.1em;
+      }
+    </style>
+  </head>
+  <body>
+    <form class="card" id="loginForm" autocomplete="on">
+      <h1>App Ratings Analyzer</h1>
+      <p class="sub">Bitte melde dich an, um fortzufahren.</p>
+      <label for="password">Passwort</label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        autocomplete="current-password"
+        autofocus
+        required
+      />
+      <button type="submit" id="submitBtn">Anmelden</button>
+      <div class="error" id="error" role="alert"></div>
+    </form>
+
+    <script>
+      const form = document.getElementById('loginForm');
+      const btn = document.getElementById('submitBtn');
+      const errorEl = document.getElementById('error');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorEl.textContent = '';
+        btn.disabled = true;
+        try {
+          const password = document.getElementById('password').value;
+          const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password }),
+          });
+          if (res.ok) {
+            window.location.href = '/';
+            return;
+          }
+          const data = await res.json().catch(() => ({}));
+          errorEl.textContent = data.error || 'Anmeldung fehlgeschlagen.';
+        } catch (err) {
+          errorEl.textContent = 'Netzwerkfehler. Bitte erneut versuchen.';
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

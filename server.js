@@ -31,6 +31,14 @@ import { startScheduler } from './src/scheduler.js';
 import { notifyInfo, notifyConfigured, sendTestEmail } from './src/notify.js';
 import { ocrRatingsImage } from './src/ratingsOcr.js';
 import { enforceSecretPermissions } from './src/security.js';
+import {
+  authEnabled,
+  checkPassword,
+  issueToken,
+  cookieOptions,
+  requireAuth,
+  COOKIE,
+} from './src/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -38,7 +46,36 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DEFAULT_APP_ID = process.env.APP_ID || '1181860241';
 
+// Behind a hosting proxy (e.g. Render), trust X-Forwarded-* so secure cookies
+// and req.secure work correctly.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 app.use(express.json({ limit: '15mb' }));
+
+// --- Optional single-password auth (enabled when DASHBOARD_PASSWORD is set) ---
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.post('/api/login', (req, res) => {
+  if (!authEnabled()) return res.json({ ok: true });
+  const { password } = req.body || {};
+  if (!checkPassword(password)) {
+    return res.status(401).json({ error: 'Falsches Passwort.' });
+  }
+  res.cookie(COOKIE, issueToken(), cookieOptions());
+  res.json({ ok: true });
+});
+
+app.post('/api/logout', (req, res) => {
+  res.clearCookie(COOKIE, { path: '/' });
+  res.json({ ok: true });
+});
+
+// Everything below this line requires a valid session when auth is enabled.
+app.use(requireAuth);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Security guard: refuse to boot if secret files (.env / .p8) are readable by
@@ -97,6 +134,7 @@ app.get('/api/config', (req, res) => {
     schedule: process.env.SYNC_CRON || '0 6 * * *',
     reportLanguage: reportLanguage(),
     notify: notifyInfo(),
+    auth: { enabled: authEnabled() },
   });
 });
 

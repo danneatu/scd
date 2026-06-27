@@ -1,0 +1,51 @@
+# Render Blueprint — free always-on web dashboard.
+# Deploy: push to GitHub, then in Render -> "New +" -> "Blueprint" and pick this repo.
+# The daily sync/LLM job runs on GitHub Actions, so the in-process cron is
+# disabled here (DISABLE_CRON=1) to avoid running the job twice.
+services:
+  - type: web
+    name: app-ratings-analyzer
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /login
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # GitHub Actions owns the daily schedule; don't double-run it here.
+      - key: DISABLE_CRON
+        value: "1"
+      # Use the shared Supabase Postgres database.
+      - key: DB_DRIVER
+        value: postgres
+      - key: REPORT_LANGUAGE
+        value: de
+      # Permissions guard is irrelevant here (no .env / .p8 on disk).
+      - key: ALLOW_INSECURE_KEY_PERMS
+        value: "1"
+      # Session signing secret — generated once by Render and kept stable.
+      - key: SESSION_SECRET
+        generateValue: true
+      # --- Set these in the Render dashboard (marked secret, not in git) ---
+      - key: DASHBOARD_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_ID
+        sync: false
+      - key: ASC_ISSUER_ID
+        sync: false
+      - key: ASC_KEY_ID
+        sync: false
+      # Paste the full .p8 contents (BEGIN/END lines included).
+      - key: ASC_PRIVATE_KEY
+        sync: false
+      - key: LLM_PROVIDER
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false

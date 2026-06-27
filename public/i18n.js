@@ -29,6 +29,7 @@ const I18N = {
     /* Dashboard controls */
     btnSync: 'Sync',
     btnTestEmail: 'Test email',
+    btnLogout: 'Logout',
 
     /* View tabs */
     tabRatings: 'Ratings & reviews',
@@ -295,6 +296,7 @@ const I18N = {
     /* Dashboard controls */
     btnSync: 'Synchronisieren',
     btnTestEmail: 'Test-E-Mail',
+    btnLogout: 'Abmelden',
 
     /* View tabs */
     tabRatings: 'Bewertungen & Rezensionen',

@@ -3,6 +3,7 @@
 const els = {
   themeToggle: document.getElementById('themeToggle'),
   langToggle: document.getElementById('langToggle'),
+  logoutBtn: document.getElementById('logoutBtn'),
   configWarning: document.getElementById('config-warning'),
 
   // Dashboard
@@ -104,6 +105,10 @@ async function init() {
     cache.config = cfg;
     if (!cfg.configured) els.configWarning.classList.remove('hidden');
     renderConfigBadge();
+    if (cfg.auth?.enabled && els.logoutBtn) {
+      els.logoutBtn.classList.remove('hidden');
+      els.logoutBtn.addEventListener('click', onLogout);
+    }
   } catch {
     // Non-fatal.
   }
@@ -174,6 +179,15 @@ function toggleTheme() {
   } catch {
     /* localStorage unavailable */
   }
+}
+
+async function onLogout() {
+  try {
+    await fetch('/api/logout', { method: 'POST' });
+  } catch {
+    /* ignore network errors; redirect anyway */
+  }
+  window.location.href = '/login';
 }
 
 /* ===================== Dashboard view tabs ===================== */
