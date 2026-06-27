@@ -11,6 +11,7 @@
 // Safe to re-run: rows are inserted with ON CONFLICT DO NOTHING (app_state is
 // upserted), so existing Postgres data is preserved.
 
+import 'dotenv/config';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
