@@ -49,3 +49,11 @@ services:
         sync: false
       - key: LLM_MODEL
         sync: false
+      # --- Optional: Sales Reports (enables the Downloads & adoption tab) ---
+      - key: SALES_KEY_ID
+        sync: false
+      - key: SALES_VENDOR_NUMBER
+        sync: false
+      # Paste the full .p8 contents (BEGIN/END lines included).
+      - key: SALES_PRIVATE_KEY
+        sync: false
