@@ -114,79 +114,57 @@ body {
   gap: 8px;
   height: 40px;
   min-width: 40px;
-  padding: 0 10px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  color: var(--muted);
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .icon-btn:hover {
   background: var(--overlay);
-  color: var(--text);
+  border-color: var(--accent);
 }
 
 .icon-btn .ic {
   display: block;
   flex-shrink: 0;
+  opacity: 0.8;
 }
 
-/* Labels are hidden on desktop (icon-only); the short language code stays. */
+/* Action label ("Switch to …") is visible by default so the control is
+   self-explanatory; only the hamburger button stays icon-only. */
 .icon-btn-label {
-  display: none;
-}
-
-.lang-toggle-label {
   display: inline;
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
-/* Segmented EN / DE language switch — both options visible so it's obvious
-   the language can be changed; the active one is highlighted. */
-.lang-switch {
-  gap: 6px;
-  padding: 0 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
+.menu-toggle.icon-btn {
+  border: none;
+  background: transparent;
+  padding: 0 8px;
 }
 
-.lang-switch .ic {
-  opacity: 0.7;
-}
-
-.lang-seg {
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: var(--muted);
-  transition: color 0.15s ease;
-}
-
-.lang-seg.active {
-  color: var(--accent);
-}
-
-.lang-seg-divider {
-  color: var(--border);
-  font-weight: 400;
-}
-
-/* Sun/moon swap driven purely by the active theme. */
+/* Sun/moon swap shows the TARGET mode (what tapping switches to):
+   dark mode → sun (go light); light mode → moon (go dark). */
 .theme-toggle-icon {
   display: inline-flex;
 }
+.ic-moon {
+  display: none;
+}
 .ic-sun {
+  display: block;
+}
+:root[data-theme='light'] .ic-sun {
   display: none;
 }
 :root[data-theme='light'] .ic-moon {
-  display: none;
-}
-:root[data-theme='light'] .ic-sun {
   display: block;
 }
 
@@ -215,7 +193,7 @@ body {
 }
 
 /* ===================== Topbar: mobile hamburger menu ===================== */
-@media (max-width: 560px) {
+@media (max-width: 768px) {
   .topbar {
     padding: 16px 16px 8px;
     align-items: center;
@@ -234,7 +212,7 @@ body {
     flex-direction: column;
     align-items: stretch;
     gap: 4px;
-    min-width: 180px;
+    min-width: 200px;
     padding: 8px;
     background: var(--panel);
     border: 1px solid var(--border);
@@ -253,12 +231,14 @@ body {
     transform: translateY(0);
   }
 
-  /* In the dropdown, show full-width rows with labels. */
+  /* In the dropdown, show full-width rows with labels and no pill border. */
   .topbar-actions .icon-btn {
     justify-content: flex-start;
     width: 100%;
     height: 44px;
     padding: 0 12px;
+    border: none;
+    background: transparent;
     color: var(--text);
   }
 

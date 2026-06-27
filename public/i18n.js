@@ -19,6 +19,9 @@ const I18N = {
     appSubtitle: 'Customer reviews via the App Store Connect API',
     themeDark: 'Dark',
     themeLight: 'Light',
+    langSwitch: 'Switch to Deutsch',
+    themeToDark: 'Switch to Dark',
+    themeToLight: 'Switch to Light',
 
     /* Config warning */
     configWarning:
@@ -286,6 +289,9 @@ const I18N = {
     appSubtitle: 'Kundenrezensionen über die App Store Connect API',
     themeDark: 'Dunkel',
     themeLight: 'Hell',
+    langSwitch: 'Auf Englisch wechseln',
+    themeToDark: 'Zu Dunkel wechseln',
+    themeToLight: 'Zu Hell wechseln',
 
     /* Config warning */
     configWarning:

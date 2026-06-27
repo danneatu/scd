@@ -168,10 +168,10 @@ function applyTheme(theme) {
   const isLight = theme === 'light';
   document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
   if (els.themeToggle) {
-    // The sun/moon icon is swapped by CSS via [data-theme]; only the text label
-    // needs updating here (shown in the mobile dropdown).
+    // The sun/moon icon is swapped by CSS via [data-theme]; the label states the
+    // action — i.e. the mode you'll switch TO when you tap it.
     const label = els.themeToggle.querySelector('.theme-toggle-label');
-    if (label) label.textContent = isLight ? t('themeLight') : t('themeDark');
+    if (label) label.textContent = isLight ? t('themeToDark') : t('themeToLight');
   }
 }
 
@@ -275,15 +275,10 @@ function switchTab(tab, { persist = true } = {}) {
 
 function updateLangToggle() {
   if (!els.langToggle) return;
-  const lang = getLang() === 'de' ? 'de' : 'en';
-  // Highlight the active segment in the EN / DE switch.
-  const segs = els.langToggle.querySelectorAll('.lang-seg');
-  if (segs.length) {
-    segs.forEach((seg) => seg.classList.toggle('active', seg.dataset.lang === lang));
-  }
-  // Back-compat: simple single-label variant (mobile dropdown).
+  // Label states the action in the current UI language (e.g. "Switch to Deutsch"
+  // while English is active, "Auf Englisch wechseln" while German is active).
   const label = els.langToggle.querySelector('.lang-toggle-label');
-  if (label) label.textContent = lang === 'de' ? 'DE' : 'EN';
+  if (label) label.textContent = t('langSwitch');
 }
 
 function toggleLang() {
