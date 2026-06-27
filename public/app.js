@@ -4,6 +4,8 @@ const els = {
   themeToggle: document.getElementById('themeToggle'),
   langToggle: document.getElementById('langToggle'),
   logoutBtn: document.getElementById('logoutBtn'),
+  menuToggle: document.getElementById('menuToggle'),
+  topbarNav: document.querySelector('.topbar-nav'),
   configWarning: document.getElementById('config-warning'),
 
   // Dashboard
@@ -120,6 +122,9 @@ async function init() {
   // Language toggle (English / German), persisted in localStorage.
   els.langToggle.addEventListener('click', toggleLang);
 
+  // Mobile hamburger menu for the topbar actions.
+  initTopbarMenu();
+
   // Dashboard view tabs (Ratings & reviews / Downloads & adoption).
   initTabs();
 
@@ -163,9 +168,9 @@ function applyTheme(theme) {
   const isLight = theme === 'light';
   document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
   if (els.themeToggle) {
-    const icon = els.themeToggle.querySelector('.theme-toggle-icon');
+    // The sun/moon icon is swapped by CSS via [data-theme]; only the text label
+    // needs updating here (shown in the mobile dropdown).
     const label = els.themeToggle.querySelector('.theme-toggle-label');
-    if (icon) icon.textContent = isLight ? '☀️' : '🌙';
     if (label) label.textContent = isLight ? t('themeLight') : t('themeDark');
   }
 }
@@ -188,6 +193,36 @@ async function onLogout() {
     /* ignore network errors; redirect anyway */
   }
   window.location.href = '/login';
+}
+
+/* ===================== Mobile hamburger menu ===================== */
+
+function setTopbarMenu(open) {
+  if (!els.topbarNav || !els.menuToggle) return;
+  els.topbarNav.classList.toggle('open', open);
+  els.menuToggle.setAttribute('aria-expanded', String(open));
+}
+
+function initTopbarMenu() {
+  if (!els.menuToggle || !els.topbarNav) return;
+
+  els.menuToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setTopbarMenu(!els.topbarNav.classList.contains('open'));
+  });
+
+  // Close after picking an action, when tapping outside, or pressing Escape.
+  els.topbarNav.addEventListener('click', (e) => {
+    if (e.target.closest('.icon-btn') && !e.target.closest('.menu-toggle')) {
+      setTopbarMenu(false);
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.topbar-nav')) setTopbarMenu(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setTopbarMenu(false);
+  });
 }
 
 /* ===================== Dashboard view tabs ===================== */

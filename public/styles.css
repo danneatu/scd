@@ -98,26 +98,79 @@ body {
   border-color: var(--accent);
 }
 
-.topbar-actions {
+/* ===================== Flat icon buttons (topbar) ===================== */
+.topbar-nav {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
 
-.lang-toggle-icon {
-  font-size: 1rem;
-  line-height: 1;
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.icon-btn:hover {
+  background: var(--overlay);
+  color: var(--text);
+}
+
+.icon-btn .ic {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Labels are hidden on desktop (icon-only); the short language code stays. */
+.icon-btn-label {
+  display: none;
 }
 
 .lang-toggle-label {
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  display: inline;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
 }
 
+/* Sun/moon swap driven purely by the active theme. */
 .theme-toggle-icon {
-  font-size: 1rem;
-  line-height: 1;
+  display: inline-flex;
+}
+.ic-sun {
+  display: none;
+}
+:root[data-theme='light'] .ic-moon {
+  display: none;
+}
+:root[data-theme='light'] .ic-sun {
+  display: block;
+}
+
+/* Hamburger only appears on mobile. */
+.menu-toggle {
+  display: none;
+  color: var(--text);
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .topbar h1 {
@@ -129,6 +182,59 @@ body {
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+/* ===================== Topbar: mobile hamburger menu ===================== */
+@media (max-width: 560px) {
+  .topbar {
+    padding: 16px 16px 8px;
+    align-items: center;
+  }
+
+  /* Show the hamburger, collapse the actions into a dropdown panel. */
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .topbar-actions {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 50;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    min-width: 180px;
+    padding: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    /* Hidden until the hamburger is tapped. */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  }
+
+  .topbar-nav.open .topbar-actions {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  /* In the dropdown, show full-width rows with labels. */
+  .topbar-actions .icon-btn {
+    justify-content: flex-start;
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    color: var(--text);
+  }
+
+  .topbar-actions .icon-btn-label {
+    display: inline;
+  }
 }
 
 .container {
