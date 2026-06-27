@@ -1125,14 +1125,6 @@ function renderRatings(data) {
       <span class="stat-label">${escapeHtml(t('statAvgRating'))}</span>
       <span class="stat-value">${data.averageRating != null ? `${data.averageRating} ★` : '—'}</span>
     </div>
-    <div class="stat-card">
-      <span class="stat-label">${escapeHtml(t('statWrittenCollected'))}</span>
-      <span class="stat-value">${written.toLocaleString()}</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-label">${escapeHtml(t('statStarOnly'))}</span>
-      <span class="stat-value">${starOnly.toLocaleString()}</span>
-    </div>
   `;
 
   els.ratingsSplit.innerHTML = `
