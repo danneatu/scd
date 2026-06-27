@@ -1223,11 +1223,21 @@ async function onStarScreenshot(evt) {
 
 /**
  * Handles a clipboard paste of an image (e.g. Cmd+V after a screenshot).
- * Ignores plain-text pastes and pastes into the number/date fields.
+ * Works even when the editor is collapsed: an image paste auto-opens it so the
+ * user sees the detected numbers. Plain-text pastes (and pastes into input
+ * fields) are left untouched.
  */
 async function onStarPaste(evt) {
-  // Only act when the star editor is open/visible.
-  if (!els.starEditor || !els.starEditor.open) return;
+  if (!els.starEditor) return;
+  // Don't hijack pastes into editable fields (text inputs, textareas, etc.).
+  const target = evt.target;
+  if (
+    target &&
+    (target.isContentEditable ||
+      /^(input|textarea|select)$/i.test(target.tagName || ''))
+  ) {
+    return;
+  }
   const items = evt.clipboardData && evt.clipboardData.items;
   if (!items) return;
   let imageFile = null;
@@ -1239,6 +1249,9 @@ async function onStarPaste(evt) {
   }
   if (!imageFile) return; // not an image paste — let it behave normally
   evt.preventDefault();
+  // Reveal the editor (it's collapsed by default) so the result is visible.
+  els.starEditor.open = true;
+  els.starEditor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   await processStarImage(imageFile);
 }
 

@@ -122,6 +122,131 @@ function handleError(res, err) {
   res.status(status).json({ error: err.message });
 }
 
+/* ===================== Input validation (defense-in-depth) ===================== */
+// The DB layer uses parameterized queries / prepared statements, so SQL string
+// injection isn't possible. These validators enforce *data integrity*: only
+// well-formed, bounded values ever reach the database, and malformed or
+// unexpected payloads are rejected with a 400 instead of being stored.
+
+/** Hard upper bound for any rating count (sanity cap, ~Apple-scale). */
+const MAX_RATINGS = 5_000_000_000;
+
+/** Builds a 400 Bad Request error carrying an HTTP status. */
+function badRequest(message) {
+  const err = new Error(message);
+  err.status = 400;
+  return err;
+}
+
+/** Validates a numeric App Store app ID (digits only, sane length). */
+function sanitizeAppId(value) {
+  const id = String(value ?? '').trim();
+  if (!/^[0-9]{1,16}$/.test(id)) {
+    throw badRequest('Invalid app ID.');
+  }
+  return id;
+}
+
+/** True only for a real YYYY-MM-DD calendar date in a sensible range. */
+function isValidDay(day) {
+  if (typeof day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;
+  const ts = Date.parse(`${day}T00:00:00Z`);
+  if (Number.isNaN(ts)) return false;
+  // Round-trip rejects impossible dates (e.g. 2024-02-31 → 2024-03-02).
+  if (new Date(ts).toISOString().slice(0, 10) !== day) return false;
+  const year = Number(day.slice(0, 4));
+  // App Store launched in 2008; allow up to ~1 day ahead for timezone slack.
+  return year >= 2008 && ts <= Date.now() + 86_400_000;
+}
+
+/**
+ * Validates + normalizes a manual ratings-snapshot payload before it is
+ * persisted. Returns a clean object containing only the allowed, bounded
+ * fields. Throws a 400 on anything malformed.
+ */
+function validateSnapshotPayload(body) {
+  const src = body && typeof body === 'object' ? body : {};
+  const out = {};
+
+  // day — optional; must be a real calendar date in range.
+  if (src.day != null && src.day !== '') {
+    if (!isValidDay(src.day)) {
+      throw badRequest('Invalid "day": expected a real YYYY-MM-DD date.');
+    }
+    out.day = src.day;
+  }
+
+  // distribution — optional object keyed by star 1..5 → non-negative integers.
+  if (src.distribution != null) {
+    const d = src.distribution;
+    if (typeof d !== 'object' || Array.isArray(d)) {
+      throw badRequest('Invalid "distribution": expected an object of star counts.');
+    }
+    const allowed = new Set(['1', '2', '3', '4', '5']);
+    for (const key of Object.keys(d)) {
+      if (!allowed.has(String(key))) {
+        throw badRequest(`Unexpected key in "distribution": ${String(key).slice(0, 20)}.`);
+      }
+    }
+    const clean = {};
+    let any = false;
+    for (const star of [1, 2, 3, 4, 5]) {
+      const raw = d[star] ?? d[String(star)] ?? 0;
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n < 0 || n > MAX_RATINGS) {
+        throw badRequest(`Invalid count for ${star}★ rating.`);
+      }
+      clean[star] = Math.round(n);
+      if (clean[star] > 0) any = true;
+    }
+    if (!any) throw badRequest('"distribution" must contain at least one positive count.');
+    out.distribution = clean;
+  }
+
+  // totalRatings — optional non-negative integer.
+  if (src.totalRatings != null) {
+    const n = Number(src.totalRatings);
+    if (!Number.isFinite(n) || n < 0 || n > MAX_RATINGS) {
+      throw badRequest('Invalid "totalRatings".');
+    }
+    out.totalRatings = Math.round(n);
+  }
+
+  // averageRating — optional number within 0..5.
+  if (src.averageRating != null) {
+    const n = Number(src.averageRating);
+    if (!Number.isFinite(n) || n < 0 || n > 5) {
+      throw badRequest('Invalid "averageRating": must be between 0 and 5.');
+    }
+    out.averageRating = Number(n.toFixed(2));
+  }
+
+  if (!out.distribution && out.totalRatings == null) {
+    throw badRequest('Provide a star distribution or a totalRatings value.');
+  }
+  return out;
+}
+
+/**
+ * Validates an inbound image payload for OCR (data URL or bare base64). Does not
+ * touch the DB, but guards against non-string / oversized / non-image inputs.
+ */
+function validateImagePayload(image) {
+  if (typeof image !== 'string' || image.length < 32) {
+    throw badRequest('Provide an "image" (data URL or base64).');
+  }
+  // ~20 MB of base64 ≈ 15 MB binary, matching the JSON body limit.
+  if (image.length > 20 * 1024 * 1024) {
+    throw badRequest('Image is too large.');
+  }
+  const dataUrl = /^data:image\/(png|jpe?g|webp|gif|bmp|heic|heif);base64,/i;
+  const bareBase64 = /^[A-Za-z0-9+/=\r\n]+$/;
+  if (!dataUrl.test(image) && !bareBase64.test(image)) {
+    throw badRequest('Unsupported image format.');
+  }
+  return image;
+}
+
 /**
  * Reports configuration status for credentials, LLM, and the daily schedule.
  */
@@ -516,13 +641,10 @@ app.get('/api/ratings-history', async (req, res) => {
  * Body: { day?, distribution?: {1..5}, totalRatings?, averageRating? }
  */
 app.post('/api/ratings-snapshot', async (req, res) => {
-  const appId = req.query.appId || DEFAULT_APP_ID;
-  const { day, distribution, totalRatings, averageRating } = req.body || {};
-  if (!distribution && totalRatings == null) {
-    return res.status(400).json({ error: 'Provide a star distribution or a totalRatings value.' });
-  }
   try {
-    await addManualSnapshot(appId, { day, distribution, totalRatings, averageRating });
+    const appId = sanitizeAppId(req.query.appId || DEFAULT_APP_ID);
+    const payload = validateSnapshotPayload(req.body || {});
+    await addManualSnapshot(appId, payload);
     res.json({ appId, ...(await getRatingsComparison(appId)) });
   } catch (err) {
     handleError(res, err);
@@ -536,11 +658,8 @@ app.post('/api/ratings-snapshot', async (req, res) => {
  * Body: { image: <data URL or base64> }
  */
 app.post('/api/ratings-ocr', async (req, res) => {
-  const { image } = req.body || {};
-  if (!image) {
-    return res.status(400).json({ error: 'Provide an "image" (data URL or base64).' });
-  }
   try {
+    const image = validateImagePayload(req.body?.image);
     const parsed = await ocrRatingsImage(image);
     if (!parsed.distribution) {
       return res.status(422).json({
