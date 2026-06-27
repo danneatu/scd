@@ -1103,6 +1103,81 @@ button.ghost {
   font-weight: 700;
 }
 
+/* ===================== Skeleton / loading placeholders ===================== */
+/* Shown while Sales-backed panels (downloads + version adoption) fetch data,
+   so the user sees a redacted preview instead of an empty panel. */
+.skeleton-card {
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.skeleton-line {
+  border-radius: 6px;
+  background: var(--border);
+  opacity: 0.55;
+}
+
+.skeleton-line--label {
+  height: 10px;
+  width: 60%;
+}
+
+.skeleton-line--value {
+  height: 26px;
+  width: 45%;
+  margin-top: 2px;
+}
+
+.skeleton-line--sub {
+  height: 9px;
+  width: 80%;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Animated shimmer sweeping across each placeholder. */
+.skeleton-line,
+.skeleton-row {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-line::after,
+.skeleton-row::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    transparent
+  );
+  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line::after,
+  .skeleton-row::after {
+    animation: none;
+  }
+}
+
 .panel {
   margin-top: 20px;
   background: var(--panel);
@@ -1110,6 +1185,7 @@ button.ghost {
   border-radius: var(--radius);
   padding: 20px;
 }
+
 
 .panel h2 {
   margin: 0 0 16px;

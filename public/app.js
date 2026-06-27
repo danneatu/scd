@@ -883,12 +883,34 @@ function openWrittenPrint(data) {
 
 /* ===================== Downloads (Sales Reports) ===================== */
 
+/** Builds N redacted stat-card placeholders (with optional sub line). */
+function skeletonStatCards(count, { withSub = false } = {}) {
+  const sub = withSub ? '<span class="skeleton-line skeleton-line--sub"></span>' : '';
+  return Array.from({ length: count })
+    .map(
+      () =>
+        `<div class="stat-card skeleton-card"><span class="skeleton-line skeleton-line--label"></span><span class="skeleton-line skeleton-line--value"></span>${sub}</div>`
+    )
+    .join('');
+}
+
+/** Builds N redacted country rows. */
+function skeletonRows(count) {
+  return Array.from({ length: count })
+    .map(() => '<div class="skeleton-row"></div>')
+    .join('');
+}
+
 async function loadDownloads({ force = false } = {}) {
   els.downloadsBtn.disabled = true;
   els.downloadsBtn.textContent = force ? t('refreshing') : t('loading');
   // Show the panel immediately with a loading hint (all-time can take a moment).
   els.downloadsPanel.classList.remove('hidden');
-  if (!els.downloadsSummary.childElementCount) {
+  // Show redacted placeholders while data loads (only when nothing is rendered
+  // yet, so a manual refresh keeps the existing numbers visible).
+  if (!els.downloadsSummary.querySelector('.stat-card:not(.skeleton-card)')) {
+    els.downloadsSummary.innerHTML = skeletonStatCards(4);
+    els.downloadsCountryList.innerHTML = skeletonRows(5);
     els.downloadsNote.textContent = t('crunchingDownloads');
   }
   try {
@@ -897,12 +919,16 @@ async function loadDownloads({ force = false } = {}) {
     if (res.status === 409 && data.needsConfig) {
       els.downloadsNote.textContent = data.error;
       els.downloadsSummary.innerHTML = '';
+      els.downloadsCountryList.innerHTML = '';
       return;
     }
     if (!res.ok) throw new Error(data.error || t('errLoadDownloads'));
     renderDownloads(data);
   } catch (err) {
     els.downloadsNote.textContent = err.message;
+    // Drop the redacted preview so a failure doesn't look like it's still loading.
+    els.downloadsSummary.querySelectorAll('.skeleton-card').forEach((el) => el.remove());
+    els.downloadsCountryList.querySelectorAll('.skeleton-row').forEach((el) => el.remove());
   } finally {
     els.downloadsBtn.disabled = false;
     els.downloadsBtn.textContent = t('refreshDownloads');
@@ -954,7 +980,8 @@ async function loadVersionAdoption({ force = false } = {}) {
   els.versionBtn.disabled = true;
   els.versionBtn.textContent = force ? t('refreshing') : t('loading');
   els.versionPanel.classList.remove('hidden');
-  if (!els.versionLatest.childElementCount) {
+  if (!els.versionLatest.querySelector('.stat-card:not(.skeleton-card)')) {
+    els.versionLatest.innerHTML = skeletonStatCards(4, { withSub: true });
     els.versionNote.textContent = t('measuringVersion');
   }
   try {
@@ -969,6 +996,7 @@ async function loadVersionAdoption({ force = false } = {}) {
     renderVersionAdoption(data);
   } catch (err) {
     els.versionNote.textContent = err.message;
+    els.versionLatest.querySelectorAll('.skeleton-card').forEach((el) => el.remove());
   } finally {
     els.versionBtn.disabled = false;
     els.versionBtn.textContent = t('refresh');
