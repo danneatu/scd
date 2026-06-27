@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Anmelden &middot; App Ratings Analyzer</title>
+    <title>Anmelden &middot; Swisscard</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg" />
+    <link rel="apple-touch-icon" href="icon.svg" />
     <style>
       :root {
         color-scheme: dark;
@@ -37,14 +39,22 @@
         padding: 32px 28px;
         box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
       }
+      .login-icon {
+        display: block;
+        margin: 0 auto 16px;
+        border-radius: 14px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      }
       h1 {
         margin: 0 0 4px;
         font-size: 1.25rem;
+        text-align: center;
       }
       p.sub {
         margin: 0 0 24px;
         color: var(--muted);
         font-size: 0.9rem;
+        text-align: center;
       }
       label {
         display: block;
@@ -91,7 +101,8 @@
   </head>
   <body>
     <form class="card" id="loginForm" autocomplete="on">
-      <h1>App Ratings Analyzer</h1>
+      <img class="login-icon" src="icon.svg" width="56" height="56" alt="Swisscard" />
+      <h1>Swisscard</h1>
       <p class="sub">Bitte melde dich an, um fortzufahren.</p>
       <label for="password">Passwort</label>
       <input
