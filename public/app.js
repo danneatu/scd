@@ -1532,15 +1532,24 @@ function renderRatingsHistory(data) {
       const sign = up ? '+' : '';
       const avgTxt = p.avgDelta == null ? '' : t('avgDeltaTxt', p.avgDelta);
       // Show the actual reference date (the last snapshot it compares to)
-      // instead of a relative label like "vs yesterday".
+      // instead of a relative label like "vs yesterday". Only keep a relative
+      // name when it's actually true: drop "yesterday" (the snapshot is rarely
+      // exactly 1 day back) and keep "last week"/"last month" only when the span
+      // genuinely falls in that range.
       const refLabel = t('vsDate', fmtDay(ref.day));
-      const periodName = periodLabel(p.key, p.label);
+      const showRelative =
+        (p.key === 'week' && p.spanDays <= 9) ||
+        (p.key === 'month' && p.spanDays >= 23 && p.spanDays <= 42) ||
+        p.key === 'baseline';
+      const foot = showRelative
+        ? t('periodFoot', periodLabel(p.key, p.label), p.spanDays, p.perDay)
+        : t('periodFootBare', p.spanDays, p.perDay);
       return `
         <div class="period-card period-card--${cls}">
           <span class="period-label">${escapeHtml(refLabel)}</span>
           <span class="period-delta">${sign}${p.totalDelta.toLocaleString()}</span>
           <span class="period-sub">${sign}${p.totalDeltaPct}% · ${avgTxt}</span>
-          <span class="period-foot">${escapeHtml(t('periodFoot', periodName, p.spanDays, p.perDay))}</span>
+          <span class="period-foot">${escapeHtml(foot)}</span>
         </div>`;
     })
     .join('');
@@ -1606,10 +1615,16 @@ function renderStarDeltas(rows, anchor) {
   const header =
     `<tr><th>${escapeHtml(t('starsHeader'))}</th>` +
     rows
-      .map(
-        (r) =>
-          `<th>${escapeHtml(t('vsDate', fmtDay(r.reference.day)))}<span class="sd-since">${escapeHtml(periodLabel(r.key, r.label))}</span></th>`
-      )
+      .map((r) => {
+        const showRelative =
+          (r.key === 'week' && r.spanDays <= 9) ||
+          (r.key === 'month' && r.spanDays >= 23 && r.spanDays <= 42) ||
+          r.key === 'baseline';
+        const sub = showRelative
+          ? `<span class="sd-since">${escapeHtml(periodLabel(r.key, r.label))}</span>`
+          : '';
+        return `<th>${escapeHtml(t('vsDate', fmtDay(r.reference.day)))}${sub}</th>`;
+      })
       .join('') +
     `</tr>`;
 

@@ -69,6 +69,7 @@ const I18N = {
     avgDeltaTxt: (value) =>
       value === 0 ? '±0.00★ avg' : `${value > 0 ? '+' : ''}${value}★ avg`,
     periodFoot: (label, spanDays, perDay) => `${label} · ${spanDays}d · ~${perDay}/day`,
+    periodFootBare: (spanDays, perDay) => `${spanDays}d · ~${perDay}/day`,
     periodYesterday: 'vs yesterday',
     periodWeek: 'vs last week',
     periodMonth: 'vs last month',
@@ -339,6 +340,7 @@ const I18N = {
     avgDeltaTxt: (value) =>
       value === 0 ? '±0,00★ Ø' : `${value > 0 ? '+' : ''}${value}★ Ø`,
     periodFoot: (label, spanDays, perDay) => `${label} · ${spanDays}T · ~${perDay}/Tag`,
+    periodFootBare: (spanDays, perDay) => `${spanDays}T · ~${perDay}/Tag`,
     periodYesterday: 'vs. gestern',
     periodWeek: 'vs. letzter Woche',
     periodMonth: 'vs. letztem Monat',
