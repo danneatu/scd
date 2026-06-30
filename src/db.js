@@ -96,3 +96,6 @@ export async function getLatestRatingSnapshot(appId, scope = 'global') {
 export async function hasRatingSnapshot(appId, day, source, scope = 'global') {
   return (await store()).hasRatingSnapshot(appId, day, source, scope);
 }
+export async function deleteRatingSnapshot(appId, opts) {
+  return (await store()).deleteRatingSnapshot(appId, opts);
+}

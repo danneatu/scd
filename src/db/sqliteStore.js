@@ -305,5 +305,18 @@ export function createStore() {
         .get(appId, day, source, scope);
       return !!row;
     },
+
+    async deleteRatingSnapshot(appId, { day, source = null, scope = 'global' }) {
+      if (source) {
+        return db
+          .prepare(
+            'DELETE FROM rating_snapshots WHERE appId = ? AND day = ? AND source = ? AND scope = ?'
+          )
+          .run(appId, day, source, scope).changes;
+      }
+      return db
+        .prepare('DELETE FROM rating_snapshots WHERE appId = ? AND day = ? AND scope = ?')
+        .run(appId, day, scope).changes;
+    },
   };
 }

@@ -137,6 +137,15 @@
             Compares the earliest stored snapshot with the latest. Today's total is captured
             automatically each time ratings load, so the comparison grows over time.
           </p>
+          <div id="ratingsComparePicker" class="ratings-compare-picker hidden">
+            <div class="rcp-row">
+              <label id="ratingsCompareLabel" for="ratingsCompareSelect" data-i18n="compareWithLabel">Compare against</label>
+              <select id="ratingsCompareSelect" class="ratings-compare-select"></select>
+            </div>
+            <p id="ratingsCompareHint" class="rcp-hint" data-i18n="compareHint">
+              Pick which earlier upload the latest snapshot is measured against.
+            </p>
+          </div>
           <div id="ratingsPeriods" class="ratings-periods"></div>
           <div id="ratingsStarDeltas" class="ratings-star-deltas"></div>
 

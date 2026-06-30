@@ -337,5 +337,20 @@ export async function createStore() {
       );
       return !!row;
     },
+
+    async deleteRatingSnapshot(appId, { day, source = null, scope = 'global' }) {
+      if (source) {
+        const r = await pool.query(
+          'DELETE FROM rating_snapshots WHERE appid = $1 AND day = $2 AND source = $3 AND scope = $4',
+          [appId, day, source, scope]
+        );
+        return r.rowCount;
+      }
+      const r = await pool.query(
+        'DELETE FROM rating_snapshots WHERE appid = $1 AND day = $2 AND scope = $3',
+        [appId, day, scope]
+      );
+      return r.rowCount;
+    },
   };
 }

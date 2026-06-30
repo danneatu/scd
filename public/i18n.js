@@ -82,6 +82,19 @@ const I18N = {
     starDeltasFoot:
       'Per-star changes need a star breakdown at both ends, which comes from App Store Connect ' +
       'screenshots. Add a fresh ASC snapshot to extend this.',
+    compareWithLabel: 'Compare against',
+    compareAnchorLabel: (day) => `Compare ${day} with:`,
+    compareHint:
+      'Pick which earlier upload the latest snapshot is measured against. ' +
+      '“Automatic” uses the nearest snapshots for yesterday / last week / start.',
+    compareAuto: 'Automatic (nearest periods)',
+    compareOption: (day, total) => `${day} · ${total} ratings`,
+    compareAgoDays: (n) => (n === 1 ? '1 day earlier' : `${n} days earlier`),
+    deleteSnapshot: 'Delete',
+    deleteSnapshotTitle: 'Delete this snapshot',
+    confirmDeleteSnapshot: (day) => `Delete the snapshot from ${day}? This cannot be undone.`,
+    snapshotDeleted: (day) => `✓ Deleted the snapshot from ${day}.`,
+    errDeleteSnapshot: 'Could not delete the snapshot.',
 
     /* Reviews-per-day timeline */
     reviewsPerDayTitle: 'Written reviews per day',
@@ -353,6 +366,20 @@ const I18N = {
     starDeltasFoot:
       'Sternegenaue Änderungen brauchen an beiden Enden eine Sterneverteilung aus ' +
       'App-Store-Connect-Screenshots. Füge einen neuen ASC-Snapshot hinzu, um dies zu erweitern.',
+    compareWithLabel: 'Vergleichen mit',
+    compareAnchorLabel: (day) => `Stichtag ${day} vergleichen mit:`,
+    compareHint:
+      'Wähle, mit welchem früheren Upload der neueste Snapshot verglichen wird. ' +
+      '„Automatisch“ nimmt die nächstgelegenen Snapshots für gestern / letzte Woche / Beginn.',
+    compareAuto: 'Automatisch (nächstgelegene Zeiträume)',
+    compareOption: (day, total) => `${day} · ${total} Bewertungen`,
+    compareAgoDays: (n) => (n === 1 ? '1 Tag davor' : `${n} Tage davor`),
+    deleteSnapshot: 'Löschen',
+    deleteSnapshotTitle: 'Diesen Snapshot löschen',
+    confirmDeleteSnapshot: (day) =>
+      `Snapshot vom ${day} löschen? Das kann nicht rückgängig gemacht werden.`,
+    snapshotDeleted: (day) => `✓ Snapshot vom ${day} gelöscht.`,
+    errDeleteSnapshot: 'Snapshot konnte nicht gelöscht werden.',
 
     /* Reviews-per-day timeline */
     reviewsPerDayTitle: 'Schriftliche Rezensionen pro Tag',

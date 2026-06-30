@@ -27,6 +27,9 @@ const els = {
   ratingsHistoryPanel: document.getElementById('ratingsHistoryPanel'),
   ratingsHistoryBtn: document.getElementById('ratingsHistoryBtn') || {},
   ratingsHistoryNote: document.getElementById('ratingsHistoryNote'),
+  ratingsComparePicker: document.getElementById('ratingsComparePicker'),
+  ratingsCompareLabel: document.getElementById('ratingsCompareLabel'),
+  ratingsCompareSelect: document.getElementById('ratingsCompareSelect'),
   ratingsPeriods: document.getElementById('ratingsPeriods'),
   ratingsStarDeltas: document.getElementById('ratingsStarDeltas'),
   ratingsBaselineDist: document.getElementById('ratingsBaselineDist'),
@@ -92,6 +95,16 @@ const cache = {
   version: null,
   timeline: null,
 };
+
+// User-selected comparison reference for "Ratings over time" (a snapshot day),
+// or '' for the automatic recent-periods view. Persisted across reloads.
+let selectedCompareDay = (() => {
+  try {
+    return localStorage.getItem('ratingsCompareDay') || '';
+  } catch {
+    return '';
+  }
+})();
 
 init();
 
@@ -1507,13 +1520,48 @@ function renderRatingsHistory(data) {
     els.ratingsPeriods.innerHTML = '';
     els.ratingsBaselineDist.innerHTML = '';
     els.ratingsTimelineList.innerHTML = '';
+    if (els.ratingsComparePicker) els.ratingsComparePicker.classList.add('hidden');
     els.ratingsHistoryPanel.classList.remove('hidden');
     return;
   }
 
-  const periods = data.periods || [];
-  const hasAny = periods.some((p) => p.available);
-  if (!hasAny) {
+  // Comparison anchor (the "latest" end of every delta). Prefer the newest
+  // snapshot that carries a star breakdown so totals match the per-star table.
+  const anchor = data.starAnchor || data.latestWithDist || latest;
+
+  // Snapshots the user can pick as the comparison reference: every stored star
+  // breakdown except the anchor itself, newest first.
+  const compareCandidates = (data.snapshots || [])
+    .filter((s) => s.distribution && anchor && s.day !== anchor.day)
+    .slice()
+    .reverse();
+  fillCompareSelect(compareCandidates, anchor);
+
+  // Resolve the manual override (if any). Drop a stale selection silently.
+  let overrideRef = null;
+  if (selectedCompareDay) {
+    overrideRef = compareCandidates.find((s) => s.day === selectedCompareDay) || null;
+    if (!overrideRef) setCompareDay('');
+  }
+
+  // Build the period cards + per-star rows, either from the manual override or
+  // from the server's automatic recent-period comparisons.
+  let periodsToRender;
+  let starRows;
+  if (overrideRef && anchor) {
+    periodsToRender = [{ key: 'custom', available: true, reference: overrideRef, ...diffClient(overrideRef, anchor) }];
+    starRows =
+      overrideRef.distribution && anchor.distribution
+        ? [{ key: 'custom', reference: overrideRef, ...starDiffClient(overrideRef, anchor) }]
+        : [];
+  } else {
+    periodsToRender = (data.periods || []).filter((p) => p.available);
+    starRows = data.starComparisons || [];
+  }
+
+  if (overrideRef) {
+    els.ratingsHistoryNote.innerHTML = t('changeVsEarlier');
+  } else if (!periodsToRender.length) {
     els.ratingsHistoryNote.textContent = t(
       'storedSnapshotNote',
       fmtDay(latest.day),
@@ -1522,8 +1570,8 @@ function renderRatingsHistory(data) {
   } else {
     els.ratingsHistoryNote.innerHTML = t('changeVsEarlier');
   }
-  els.ratingsPeriods.innerHTML = periods
-    .filter((p) => p.available)
+
+  els.ratingsPeriods.innerHTML = periodsToRender
     .map((p) => {
       const ref = p.reference;
       const up = p.totalDelta > 0;
@@ -1554,8 +1602,8 @@ function renderRatingsHistory(data) {
     })
     .join('');
 
-  // Per-star deltas table (5★…1★ added since each period).
-  renderStarDeltas(data.starComparisons || [], data.starAnchor);
+  // Per-star deltas table (5★…1★ added since each reference).
+  renderStarDeltas(starRows, anchor);
 
   // Star distribution from the most recent snapshot that carries one.
   const distSnap = data.latestWithDist;
@@ -1579,21 +1627,140 @@ function renderRatingsHistory(data) {
     els.ratingsBaselineDist.innerHTML = '';
   }
 
-  // Timeline list (newest first).
+  // Timeline list (newest first), each row deletable.
   const rows = (data.snapshots || []).slice().reverse();
   els.ratingsTimelineList.innerHTML = rows
     .map(
       (s) =>
-        `<div class="ratings-country"><span class="rc-country">${fmtDay(s.day)} · ${escapeHtml(
-          s.source
-        )}</span><span>${(s.totalRatings || 0).toLocaleString()} · ${
-          s.averageRating != null ? s.averageRating + '★' : '—'
-        }</span></div>`
+        `<div class="ratings-country ratings-snap-row">
+          <span class="rc-country">${fmtDay(s.day)} · ${escapeHtml(s.source)}</span>
+          <span class="rc-snap-val">${(s.totalRatings || 0).toLocaleString()} · ${
+            s.averageRating != null ? s.averageRating + '★' : '—'
+          }</span>
+          <button type="button" class="snap-del" data-day="${escapeHtml(s.day)}" data-source="${escapeHtml(
+            s.source
+          )}" title="${escapeHtml(t('deleteSnapshotTitle'))}" aria-label="${escapeHtml(
+            t('deleteSnapshot')
+          )}">✕</button>
+        </div>`
     )
     .join('');
 
+  wireRatingsHistoryControls();
   els.ratingsHistoryPanel.classList.remove('hidden');
 }
+
+/** Computes total/avg/per-day deltas between two snapshots (mirror of server). */
+function diffClient(from, to) {
+  const totalDelta = (to.totalRatings ?? 0) - (from.totalRatings ?? 0);
+  const fromTotal = from.totalRatings ?? 0;
+  const totalDeltaPct = fromTotal > 0 ? Number(((totalDelta / fromTotal) * 100).toFixed(1)) : 0;
+  const avgDelta =
+    to.averageRating != null && from.averageRating != null
+      ? Number((to.averageRating - from.averageRating).toFixed(2))
+      : null;
+  const days = Math.max(1, Math.round((Date.parse(to.day) - Date.parse(from.day)) / 86400000));
+  return {
+    totalDelta,
+    totalDeltaPct,
+    avgDelta,
+    spanDays: days,
+    perDay: Number((totalDelta / days).toFixed(1)),
+  };
+}
+
+/** Per-star difference between two distributions (to − from). */
+function starDiffClient(from, to) {
+  const per = {};
+  let total = 0;
+  for (let star = 1; star <= 5; star += 1) {
+    const d = (to.distribution[star] || 0) - (from.distribution[star] || 0);
+    per[star] = d;
+    total += d;
+  }
+  const days = Math.max(1, Math.round((Date.parse(to.day) - Date.parse(from.day)) / 86400000));
+  return { perStar: per, total, spanDays: days };
+}
+
+/** Fills the "compare against" dropdown and shows/hides it as appropriate. */
+function fillCompareSelect(candidates, anchor) {
+  if (!els.ratingsCompareSelect) return;
+  // Make the fixed end of the comparison explicit in the label.
+  if (els.ratingsCompareLabel) {
+    els.ratingsCompareLabel.textContent = anchor
+      ? t('compareAnchorLabel', fmtDay(anchor.day))
+      : t('compareWithLabel');
+  }
+  const opts = [`<option value="">${escapeHtml(t('compareAuto'))}</option>`].concat(
+    candidates.map((s) => {
+      const sel = s.day === selectedCompareDay ? ' selected' : '';
+      const base = t('compareOption', fmtDay(s.day), (s.totalRatings || 0).toLocaleString());
+      // Append how far before the anchor this snapshot sits, for context.
+      let label = base;
+      if (anchor) {
+        const days = Math.max(
+          1,
+          Math.round((Date.parse(anchor.day) - Date.parse(s.day)) / 86400000)
+        );
+        label = `${base} · ${t('compareAgoDays', days)}`;
+      }
+      return `<option value="${escapeHtml(s.day)}"${sel}>${escapeHtml(label)}</option>`;
+    })
+  );
+  els.ratingsCompareSelect.innerHTML = opts.join('');
+  if (els.ratingsComparePicker) {
+    els.ratingsComparePicker.classList.toggle('hidden', candidates.length === 0);
+  }
+}
+
+/** Persists the chosen comparison day (best-effort). */
+function setCompareDay(day) {
+  selectedCompareDay = day || '';
+  try {
+    localStorage.setItem('ratingsCompareDay', selectedCompareDay);
+  } catch {
+    /* storage may be unavailable */
+  }
+}
+
+let historyControlsWired = false;
+function wireRatingsHistoryControls() {
+  if (historyControlsWired) return;
+  historyControlsWired = true;
+  if (els.ratingsCompareSelect) {
+    els.ratingsCompareSelect.addEventListener('change', () => {
+      setCompareDay(els.ratingsCompareSelect.value);
+      if (cache.ratingsHistory) renderRatingsHistory(cache.ratingsHistory);
+    });
+  }
+  if (els.ratingsTimelineList) {
+    els.ratingsTimelineList.addEventListener('click', onSnapshotListClick);
+  }
+}
+
+async function onSnapshotListClick(evt) {
+  const btn = evt.target.closest('.snap-del');
+  if (!btn) return;
+  const day = btn.dataset.day;
+  const source = btn.dataset.source || '';
+  if (!day) return;
+  if (!window.confirm(t('confirmDeleteSnapshot', fmtDay(day)))) return;
+  btn.disabled = true;
+  try {
+    const params = new URLSearchParams({ day });
+    if (source) params.set('source', source);
+    const res = await fetch(`/api/ratings-snapshot?${params.toString()}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || t('errDeleteSnapshot'));
+    if (selectedCompareDay === day) setCompareDay('');
+    renderRatingsHistory(data);
+    els.ratingsHistoryNote.textContent = t('snapshotDeleted', fmtDay(day));
+  } catch (err) {
+    els.ratingsHistoryNote.textContent = err.message;
+    btn.disabled = false;
+  }
+}
+
 
 function starCell(n) {
   if (n == null) return '<td class="sd-num sd-flat">—</td>';

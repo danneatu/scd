@@ -25,6 +25,7 @@ import {
   captureRatingSnapshot,
   getRatingsComparison,
   addManualSnapshot,
+  removeSnapshot,
 } from './src/ratingsHistory.js';
 import { getDownloadsSummary, getVersionAdoption, salesConfigured } from './src/downloads.js';
 import { startScheduler } from './src/scheduler.js';
@@ -646,6 +647,26 @@ app.post('/api/ratings-snapshot', async (req, res) => {
     const payload = validateSnapshotPayload(req.body || {});
     await addManualSnapshot(appId, payload);
     res.json({ appId, ...(await getRatingsComparison(appId)) });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+/**
+ * Deletes a stored ratings snapshot (e.g. a mistaken upload).
+ * Query: { appId?, day=YYYY-MM-DD, source? }. Without `source`, removes every
+ * snapshot stored for that day.
+ */
+app.delete('/api/ratings-snapshot', async (req, res) => {
+  try {
+    const appId = sanitizeAppId(req.query.appId || DEFAULT_APP_ID);
+    const day = req.query.day;
+    if (!isValidDay(day)) {
+      throw badRequest('Invalid "day": expected a real YYYY-MM-DD date.');
+    }
+    const source = req.query.source ? String(req.query.source).slice(0, 20) : null;
+    const removed = await removeSnapshot(appId, { day, source });
+    res.json({ appId, removed, ...(await getRatingsComparison(appId)) });
   } catch (err) {
     handleError(res, err);
   }

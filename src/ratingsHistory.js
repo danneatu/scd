@@ -4,6 +4,7 @@ import {
   getFirstRatingSnapshot,
   getLatestRatingSnapshot,
   hasRatingSnapshot,
+  deleteRatingSnapshot,
 } from './db.js';
 
 /**
@@ -102,6 +103,11 @@ export async function addManualSnapshot(appId, { day, distribution, totalRatings
     source: 'manual',
     scope: 'global',
   });
+}
+
+/** Deletes a stored snapshot (by day; optionally narrowed to a source). */
+export async function removeSnapshot(appId, { day, source = null, scope = 'global' }) {
+  return deleteRatingSnapshot(appId, { day, source, scope });
 }
 
 function pct(part, whole) {
