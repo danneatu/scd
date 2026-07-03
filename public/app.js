@@ -389,6 +389,16 @@ function currentMonthValue() {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
+// The user's LOCAL calendar day as YYYY-MM-DD. Using toISOString() here would
+// return the UTC day, which is a day behind for users east of UTC in the early
+// hours — so a screenshot uploaded just after midnight got stamped "yesterday".
+function localToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+    d.getDate()
+  ).padStart(2, '0')}`;
+}
+
 function dashStatus(message, isError) {
   els.dashStatus.textContent = message;
   els.dashStatus.classList.toggle('error', Boolean(isError));
@@ -1251,7 +1261,7 @@ function initStarEditor() {
   if (!els.starEditor) return;
   // Default the date to today.
   if (els.starDate && !els.starDate.value) {
-    els.starDate.value = new Date().toISOString().slice(0, 10);
+    els.starDate.value = localToday();
   }
   for (const star of [5, 4, 3, 2, 1]) {
     els.starInputs[star].addEventListener('input', updateStarTotals);
@@ -1385,7 +1395,7 @@ async function onSaveStarSnapshot() {
     setStarMsg(t('enterStar'), true);
     return;
   }
-  const day = els.starDate.value || new Date().toISOString().slice(0, 10);
+  const day = els.starDate.value || localToday();
   els.starSaveBtn.disabled = true;
   const original = els.starSaveBtn.textContent;
   els.starSaveBtn.textContent = t('saving');
