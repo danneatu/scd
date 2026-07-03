@@ -76,8 +76,8 @@ export async function getRecentSyncs(appId, limit = 5) {
 export async function saveReport(appId, month, source, report) {
   return (await store()).saveReport(appId, month, source, report);
 }
-export async function getLatestReport(appId, month) {
-  return (await store()).getLatestReport(appId, month);
+export async function getLatestReport(appId, month, language) {
+  return (await store()).getLatestReport(appId, month, language);
 }
 
 /* ---------- rating snapshots ---------- */

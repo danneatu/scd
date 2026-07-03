@@ -265,14 +265,28 @@ export async function createStore() {
       );
     },
 
-    async getLatestReport(appId, month) {
-      const row = await one(
+    async getLatestReport(appId, month, language) {
+      const rows = await many(
         `SELECT ${REPORT_COLS} FROM reports WHERE appid = $1 AND month = $2
-         ORDER BY createdat DESC LIMIT 1`,
+         ORDER BY createdat DESC LIMIT 40`,
         [appId, month]
       );
-      if (!row) return null;
-      return { ...row, report: JSON.parse(row.json) };
+      if (!rows.length) return null;
+      // When a language is requested, return the newest report generated in that
+      // language (so an English UI never gets the cached German report). Falls
+      // back to no match → null, which makes the caller regenerate.
+      let pick = rows[0];
+      if (language) {
+        pick = rows.find((r) => {
+          try {
+            return JSON.parse(r.json)?.agent?.language === language;
+          } catch {
+            return false;
+          }
+        });
+      }
+      if (!pick) return null;
+      return { ...pick, report: JSON.parse(pick.json) };
     },
 
     async saveRatingSnapshot(

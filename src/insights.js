@@ -183,7 +183,8 @@ function safeParseJson(text) {
  * @param {string} options.month             "YYYY-MM".
  * @param {Array}  options.reviews           Reviews for that month (from the DB).
  * @param {Array}  [options.previousReviews] Previous month's reviews (for trends).
+ * @param {string} [options.language]        Output language override (e.g. "en", "de").
  */
-export async function generateMonthlyReport({ month, reviews, previousReviews = [] }) {
-  return analyzeReviews({ month, reviews, previousReviews });
+export async function generateMonthlyReport({ month, reviews, previousReviews = [], language }) {
+  return analyzeReviews({ month, reviews, previousReviews, language });
 }

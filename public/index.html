@@ -11,10 +11,10 @@
       // Apply the saved theme + language before first paint to avoid a flash.
       (function () {
         try {
-          var t = localStorage.getItem('theme') || 'dark';
+          var t = localStorage.getItem('theme') || 'light';
           document.documentElement.setAttribute('data-theme', t);
         } catch (e) {
-          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.setAttribute('data-theme', 'light');
         }
         try {
           var l = localStorage.getItem('lang');
@@ -29,69 +29,102 @@
     </script>
   </head>
   <body>
-    <header class="topbar">
-      <div class="topbar-brand">
-        <img class="app-icon" src="icon.png" width="44" height="44" alt="Swisscard" />
-        <div class="topbar-text">
-          <h1><span class="brand-name">Swisscard</span><span class="brand-sub" data-i18n="appTitle">App Ratings Analyzer</span></h1>
-          <p class="subtitle" data-i18n="appSubtitle">Customer reviews via the App Store Connect API</p>
-        </div>
-      </div>
-      <div class="topbar-nav">
-        <button
-          type="button"
-          id="menuToggle"
-          class="icon-btn menu-toggle"
-          aria-label="Menu"
-          aria-haspopup="true"
-          aria-expanded="false"
-          aria-controls="topbarActions"
-        >
-          <svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-        <div class="topbar-actions" id="topbarActions">
-          <button type="button" id="langToggle" class="icon-btn" title="English / Deutsch" aria-label="Switch language">
-            <svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M3 12h18" />
-              <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z" />
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+          <img class="app-icon" src="icon.png" width="40" height="40" alt="Swisscard" />
+          <div class="topbar-text">
+            <h1><span class="brand-name">Swisscard</span></h1>
+            <p class="subtitle" data-i18n="appTitle">App Ratings Analyzer</p>
+          </div>
+          <button
+            type="button"
+            id="menuToggle"
+            class="icon-btn menu-toggle"
+            aria-label="Menu"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-controls="topbarActions"
+          >
+            <svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
-            <span class="icon-btn-label lang-toggle-label">Switch to Deutsch</span>
-          </button>
-          <button type="button" id="themeToggle" class="icon-btn" title="Toggle light / dark mode" aria-label="Toggle light or dark mode">
-            <span class="theme-toggle-icon">
-              <svg class="ic ic-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-              <svg class="ic ic-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-              </svg>
-            </span>
-            <span class="icon-btn-label theme-toggle-label">Switch to Dark</span>
-          </button>
-          <button type="button" id="logoutBtn" class="icon-btn hidden" title="Abmelden" aria-label="Abmelden" data-i18n-title="btnLogout">
-            <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            <span class="icon-btn-label" data-i18n="btnLogout">Logout</span>
           </button>
         </div>
-      </div>
-    </header>
 
-    <main class="container">
-      <section id="config-warning" class="banner banner--warn hidden" data-i18n-html="configWarning">
-        <strong>Credentials not configured.</strong>
-        Add your <code>ASC_ISSUER_ID</code>, <code>ASC_KEY_ID</code>, and private key
-        to a <code>.env</code> file (see <code>.env.example</code>), then restart the server.
-      </section>
+        <div class="topbar-nav" id="sidebarCollapsible">
+          <nav class="sidebar-nav" aria-label="Sections">
+            <a class="sidebar-link" href="#ratingsPanel">
+              <svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+              <span data-i18n="ratingsOverviewNav">Overview</span>
+            </a>
+            <a class="sidebar-link" href="#ratingsHistoryPanel">
+              <svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+              <span data-i18n="ratingsOverTimeTitle">Ratings over time</span>
+            </a>
+            <a class="sidebar-link" href="#report">
+              <svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+              <span data-i18n="monthlyInsights">Monthly insights</span>
+            </a>
+            <a class="sidebar-link" href="#writtenPanel">
+              <svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg>
+              <span data-i18n="writtenReviewsTitle">Written reviews</span>
+            </a>
+            <a class="sidebar-link" href="#downloadsPanel">
+              <svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+              <span data-i18n="downloadsTitle">Downloads</span>
+            </a>
+          </nav>
+
+          <div class="sidebar-foot topbar-actions" id="topbarActions">
+            <button type="button" id="langToggle" class="icon-btn" title="English / Deutsch" aria-label="Switch language">
+              <svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18" />
+                <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z" />
+              </svg>
+              <span class="icon-btn-label lang-toggle-label">Switch to Deutsch</span>
+            </button>
+            <button type="button" id="themeToggle" class="icon-btn" title="Toggle light / dark mode" aria-label="Toggle light or dark mode">
+              <span class="theme-toggle-icon">
+                <svg class="ic ic-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+                <svg class="ic ic-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                </svg>
+              </span>
+              <span class="icon-btn-label theme-toggle-label">Switch to Dark</span>
+            </button>
+            <button type="button" id="logoutBtn" class="icon-btn hidden" title="Abmelden" aria-label="Abmelden" data-i18n-title="btnLogout">
+              <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span class="icon-btn-label" data-i18n="btnLogout">Logout</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="app-content">
+        <header class="content-head">
+          <div class="content-head-text">
+            <h2 class="content-title" data-i18n="appTitle">App Ratings Analyzer</h2>
+            <p class="subtitle" data-i18n="appSubtitle">Customer reviews via the App Store Connect API</p>
+          </div>
+        </header>
+
+        <main class="container">
+          <section id="config-warning" class="banner banner--warn hidden" data-i18n-html="configWarning">
+            <strong>Credentials not configured.</strong>
+            Add your <code>ASC_ISSUER_ID</code>, <code>ASC_KEY_ID</code>, and private key
+            to a <code>.env</code> file (see <code>.env.example</code>), then restart the server.
+          </section>
 
       <!-- ===================== Monthly Dashboard ===================== -->
       <section class="dashboard">
@@ -122,6 +155,7 @@
           </p>
           <div id="ratingsSummary" class="summary"></div>
           <div id="ratingsSplit" class="ratings-split"></div>
+          <div id="ratingsBaselineDist" class="ratings-baseline-dist"></div>
           <details id="ratingsByCountry" class="ratings-countries">
             <summary data-i18n="topStorefronts">Top storefronts by ratings</summary>
             <div id="ratingsCountryList" class="ratings-country-list"></div>
@@ -173,7 +207,6 @@
             </div>
           </div>
 
-          <div id="ratingsBaselineDist" class="ratings-baseline-dist"></div>
           <details id="starEditor" class="star-editor">
             <summary data-i18n="starEditorTitle">Update star breakdown (from App Store Connect)</summary>
             <p class="panel-note" data-i18n-html="starEditorNote">
@@ -215,24 +248,44 @@
         <!-- AI / heuristic monthly report -->
         <section id="report" class="panel hidden">
           <div class="panel-head">
-            <h2 id="reportTitle" data-i18n="monthlyInsights">Monthly insights</h2>
+            <h2 id="reportTitle" class="panel-title-icon">
+              <span class="hicon hicon--accent" aria-hidden="true">
+                <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+              </span>
+              <span id="reportTitleText" data-i18n="monthlyInsights">Monthly insights</span>
+            </h2>
             <span id="reportSource" class="report-source"></span>
           </div>
           <p id="reportSummary" class="report-summary"></p>
 
           <div class="insight-grid">
             <div class="insight-col">
-              <h3 class="insight-h insight-h--bad" data-i18n="painTitle">😖 Biggest pain points</h3>
+              <h3 class="insight-h insight-h--bad">
+                <span class="hicon hicon--bad" aria-hidden="true">
+                  <svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </span>
+                <span data-i18n="painTitle">Biggest pain points</span>
+              </h3>
               <ul id="painList" class="insight-list"></ul>
             </div>
             <div class="insight-col">
-              <h3 class="insight-h insight-h--good" data-i18n="praiseTitle">😊 What users love</h3>
+              <h3 class="insight-h insight-h--good">
+                <span class="hicon hicon--good" aria-hidden="true">
+                  <svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </span>
+                <span data-i18n="praiseTitle">What users love</span>
+              </h3>
               <ul id="praiseList" class="insight-list"></ul>
             </div>
           </div>
 
           <div id="actionsBlock" class="actions-block hidden">
-            <h3 class="insight-h" data-i18n="actionsTitle">✅ Suggested actions</h3>
+            <h3 class="insight-h">
+              <span class="hicon hicon--accent" aria-hidden="true">
+                <svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </span>
+              <span data-i18n="actionsTitle">Suggested actions</span>
+            </h3>
             <ul id="actionsList" class="actions-list"></ul>
           </div>
         </section>
@@ -240,7 +293,12 @@
         <!-- Written reviews: day-by-day listing + monthly overview + PDF export -->
         <section id="writtenPanel" class="panel hidden">
           <div class="panel-head">
-            <h2 data-i18n="writtenReviewsTitle">Written reviews</h2>
+            <h2 class="panel-title-icon">
+              <span class="hicon hicon--accent" aria-hidden="true">
+                <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </span>
+              <span data-i18n="writtenReviewsTitle">Written reviews</span>
+            </h2>
             <div class="panel-head-actions">
               <button type="button" id="writtenPdfBtn" data-i18n="exportPdf">Export PDF</button>
             </div>
@@ -284,7 +342,9 @@
         </section>
         </div><!-- /#tabDownloads -->
       </section>
-    </main>
+        </main>
+      </div><!-- /.app-content -->
+    </div><!-- /.app-shell -->
 
     <script src="i18n.js"></script>
     <script src="app.js"></script>

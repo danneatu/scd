@@ -62,7 +62,7 @@ const els = {
   versionNote: document.getElementById('versionNote'),
   versionLatest: document.getElementById('versionLatest'),
   report: document.getElementById('report'),
-  reportTitle: document.getElementById('reportTitle'),
+  reportTitle: document.getElementById('reportTitleText'),
   reportSource: document.getElementById('reportSource'),
   reportSummary: document.getElementById('reportSummary'),
   painList: document.getElementById('painList'),
@@ -141,6 +141,9 @@ async function init() {
   // Dashboard view tabs (Ratings & reviews / Downloads & adoption).
   initTabs();
 
+  // Sidebar section links (switch tab + scroll to the target panel).
+  initSidebarNav();
+
   // Dashboard wiring
   els.syncAllBtn.addEventListener('click', onSyncAll);
   els.notifyTestBtn.addEventListener('click', onTestNotify);
@@ -153,6 +156,8 @@ async function init() {
     // Load ratings first (captures today's snapshot), then the history compare.
     loadRatings().then(() => loadRatingsHistory());
     loadWrittenReviews();
+    // Show the cached monthly report (in the current UI language) if one exists.
+    loadReport().catch(() => {});
   }
   if (appConfig?.sales?.configured) {
     loadDownloads();
@@ -238,6 +243,49 @@ function initTopbarMenu() {
   });
 }
 
+/* ===================== Sidebar section navigation ===================== */
+
+// Each sidebar link targets a panel, but panels live inside a tab
+// (Ratings & reviews vs. Downloads & adoption). So a link must first switch to
+// the panel's tab, then scroll to it — otherwise it points at a hidden element.
+const SIDEBAR_PANEL_TAB = {
+  ratingsPanel: 'ratings',
+  ratingsHistoryPanel: 'ratings',
+  report: 'ratings',
+  writtenPanel: 'ratings',
+  versionPanel: 'downloads',
+  downloadsPanel: 'downloads',
+};
+
+function initSidebarNav() {
+  const links = document.querySelectorAll('.sidebar-link');
+  if (!links.length) return;
+
+  for (const link of links) {
+    link.addEventListener('click', (e) => {
+      const href = link.getAttribute('href') || '';
+      const id = href.startsWith('#') ? href.slice(1) : '';
+      const target = id && document.getElementById(id);
+      if (!target) return; // let the browser handle anything unexpected
+
+      e.preventDefault();
+
+      // Switch to the tab that contains this panel first.
+      const tab = SIDEBAR_PANEL_TAB[id];
+      if (tab) switchTab(tab);
+
+      // Highlight the active link.
+      for (const l of links) l.classList.toggle('sidebar-link--active', l === link);
+
+      // Close the mobile menu if it's open, then scroll after layout settles.
+      setTopbarMenu(false);
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+}
+
 /* ===================== Dashboard view tabs ===================== */
 
 // Maps a tab name to its panel element key.
@@ -309,8 +357,10 @@ function applyLanguage() {
   if (cache.dashboard) renderDashboardSummary(cache.dashboard);
   if (cache.ratings) renderRatings(cache.ratings);
   if (cache.ratingsHistory) renderRatingsHistory(cache.ratingsHistory);
-  if (cache.report) renderReport(cache.report);
-  if (writtenData) renderWrittenReviews(writtenData);
+  // The AI report is written in the selected language, so re-fetch it (the
+  // server returns the matching-language cache, or generates it once).
+  if (cache.report) loadReport().catch(() => {});
+  if (writtenData) loadWrittenReviews().catch(() => {});
   if (cache.timeline) renderReviewsTimeline(cache.timeline);
   if (cache.downloads) renderDownloads(cache.downloads);
   if (cache.version) renderVersionAdoption(cache.version);
@@ -442,9 +492,21 @@ async function onTestNotify() {
 }
 
 async function generateReport({ silent = false } = {}) {
+  return loadReport({ refresh: true, silent });
+}
+
+/**
+ * Loads the monthly insights report in the current UI language. The report text
+ * (titles, descriptions, summary, actions) is AI-generated per language and
+ * cached server-side, so switching the UI language fetches (or generates) the
+ * matching-language version.
+ */
+async function loadReport({ refresh = false, silent = true } = {}) {
   const month = currentMonthValue();
+  const params = new URLSearchParams({ month, lang: getLang() });
+  if (refresh) params.set('refresh', '1');
   if (!silent) dashStatus(t('generatingReport'), false);
-  const res = await fetch(`/api/monthly-report?month=${month}&refresh=1`);
+  const res = await fetch(`/api/monthly-report?${params.toString()}`);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || t('errReport'));
   renderReport(data);
@@ -478,6 +540,29 @@ function renderReport(data) {
   els.report.classList.remove('hidden');
 }
 
+/* ===================== Inline SVG icon system ===================== */
+/* Modern stroke icons (24×24) matching the sidebar set. Kept as path data so
+   they can be injected into both static and dynamically-rendered markup. */
+const UI_ICONS = {
+  pain: '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  praise: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>',
+  actions: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  analysis: '<path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6" rx="1"/><rect x="12" y="7" width="3" height="10" rx="1"/><rect x="17" y="13" width="3" height="4" rx="1"/>',
+  reviews: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  sparkle: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+};
+
+/** Returns an inline SVG string for the given icon name. */
+function svgIcon(name, size = 18) {
+  const p = UI_ICONS[name] || '';
+  return `<svg class="ic" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+}
+
+/** Wraps an icon in a tinted rounded chip for section headers. */
+function hicon(name, tone = '') {
+  return `<span class="hicon${tone ? ` hicon--${tone}` : ''}" aria-hidden="true">${svgIcon(name)}</span>`;
+}
+
 function renderInsightList(container, items, type) {
   container.innerHTML = '';
   if (!items.length) {
@@ -491,7 +576,7 @@ function renderInsightList(container, items, type) {
     const li = document.createElement('li');
     li.className = `insight-item ${type}`;
     const tags = [];
-    if (item.frequency != null) tags.push(`<span class="tag">×${item.frequency}</span>`);
+    if (item.frequency != null) tags.push(`<span class="tag tag--count">×${item.frequency}</span>`);
     if (item.severity) tags.push(`<span class="tag sev-${escapeHtml(item.severity)}">${escapeHtml(item.severity)}</span>`);
     const examples = (item.examples || [])
       .map((e) => `<li>“${escapeHtml(e)}”</li>`)
@@ -524,6 +609,7 @@ async function loadWrittenReviews({ refresh = false } = {}) {
     const params = new URLSearchParams();
     if (writtenSelected && writtenSelected.length) params.set('months', writtenSelected.join(','));
     if (refresh) params.set('refresh', '1');
+    params.set('lang', getLang());
     const res = await fetch(`/api/written-reviews?${params.toString()}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || t('errLoadWritten'));
@@ -765,24 +851,27 @@ function renderWrittenAnalysis(report) {
 
   el.innerHTML = `
     <div class="wa-head">
-      <h3 class="wa-title">${escapeHtml(t('monthlyAnalysis'))}</h3>
+      <div class="wa-head-main">
+        <span class="hicon hicon--accent" aria-hidden="true">${svgIcon('analysis', 20)}</span>
+        <h3 class="wa-title">${escapeHtml(t('monthlyAnalysis'))}</h3>
+      </div>
       <span class="wa-source" title="Skills: ${escapeHtml(skills)}">${escapeHtml(sourceLabel)}</span>
     </div>
     ${report.summary ? `<p class="wa-summary">${escapeHtml(report.summary)}</p>` : ''}
     ${chips ? `<div class="cat-chips">${chips}</div>` : ''}
     <div class="insight-grid">
       <div class="insight-col">
-        <h4 class="insight-h insight-h--bad">${escapeHtml(t('painTitle'))}</h4>
+        <h4 class="insight-h insight-h--bad">${hicon('pain', 'bad')}<span>${escapeHtml(t('painTitle'))}</span></h4>
         <ul class="insight-list" id="waPain"></ul>
       </div>
       <div class="insight-col">
-        <h4 class="insight-h insight-h--good">${escapeHtml(t('praiseTitle'))}</h4>
+        <h4 class="insight-h insight-h--good">${hicon('praise', 'good')}<span>${escapeHtml(t('praiseTitle'))}</span></h4>
         <ul class="insight-list" id="waPraise"></ul>
       </div>
     </div>
     ${
       (report.suggestedActions || []).length
-        ? `<div class="actions-block"><h4 class="insight-h">${escapeHtml(t('actionsTitle'))}</h4>
+        ? `<div class="actions-block"><h4 class="insight-h">${hicon('actions', 'accent')}<span>${escapeHtml(t('actionsTitle'))}</span></h4>
             <ul class="actions-list">${report.suggestedActions
               .map((a) => `<li>${escapeHtml(a)}</li>`)
               .join('')}</ul></div>`
@@ -1618,7 +1707,7 @@ function renderRatingsHistory(data) {
           const w = Math.max(1, Math.round((n / max) * 100));
           return `<div class="dist-row">
             <span class="dist-star">${'★'.repeat(star)}</span>
-            <span class="dist-bar"><span class="dist-bar-fill dist-${star}" style="width:${w}%"></span></span>
+            <span class="dist-bar"><span class="dist-bar-fill" style="width:${w}%"></span></span>
             <span class="dist-num">${n.toLocaleString()}</span>
           </div>`;
         })

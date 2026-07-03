@@ -412,10 +412,13 @@ app.get('/api/monthly-report', async (req, res) => {
   const appId = req.query.appId || DEFAULT_APP_ID;
   const month = req.query.month || currentMonth();
   const refresh = req.query.refresh === '1';
+  // The report is written in the requested UI language (falls back to the
+  // server default). Cached per-language so switching the UI regenerates once.
+  const language = reportLanguage(req.query.lang).code;
 
   try {
     if (!refresh) {
-      const cached = await getLatestReport(appId, month);
+      const cached = await getLatestReport(appId, month, language);
       if (cached) {
         return res.json({ appId, month, cached: true, createdAt: cached.createdAt, ...cached.report });
       }
@@ -437,7 +440,7 @@ app.get('/api/monthly-report', async (req, res) => {
     const { startIso, endIso } = monthRange(month);
     const reviews = await getReviewsBetween(appId, startIso, endIso);
     const previousReviews = await loadPreviousMonthReviews(appId, month);
-    const report = await generateMonthlyReport({ month, reviews, previousReviews });
+    const report = await generateMonthlyReport({ month, reviews, previousReviews, language });
     await saveReport(appId, month, report.source, report);
 
     if (syncNote && !report.note) report.note = syncNote;
@@ -517,6 +520,8 @@ async function availableMonths(appId, limit = 3, lookback = 24) {
 app.get('/api/written-reviews', async (req, res) => {
   const appId = req.query.appId || DEFAULT_APP_ID;
   const refresh = req.query.refresh === '1';
+  // Embedded analysis is written in the requested UI language (cached per-language).
+  const language = reportLanguage(req.query.lang).code;
 
   try {
     let syncNote;
@@ -568,7 +573,7 @@ app.get('/api/written-reviews', async (req, res) => {
     const cacheKey = selected.join(',');
     let report = null;
     if (!refresh) {
-      const cached = await getLatestReport(appId, cacheKey);
+      const cached = await getLatestReport(appId, cacheKey, language);
       if (cached) report = { cached: true, ...cached.report };
     }
     if (!report) {
@@ -579,6 +584,7 @@ app.get('/api/written-reviews', async (req, res) => {
         month: cacheKey,
         reviews: allReviews,
         previousReviews,
+        language,
       });
       await saveReport(appId, cacheKey, report.source, report);
     }

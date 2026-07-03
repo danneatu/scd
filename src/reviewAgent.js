@@ -266,7 +266,49 @@ function clusterPain(classified, prevClassified) {
     });
   }
 
-  return themes.sort((a, b) => b.score - a.score);
+  // Catch-all: negative reviews whose wording isn't in the lexicon still count.
+  // Without this, genuine complaints phrased with words we don't index would be
+  // silently dropped from the report.
+  const otherNeg = negatives.filter((r) => !r.painCategories.length);
+  if (otherNeg.length) {
+    const frequency = otherNeg.length;
+    const share = frequency / totalNeg;
+    const rated = otherNeg.filter((r) => typeof r.rating === 'number');
+    const avgRating = rated.length ? rated.reduce((s, r) => s + r.rating, 0) / rated.length : 2;
+    const intensity = Math.min(Math.max((3 - avgRating) / 2, 0), 1);
+    const recent = otherNeg.filter((r) => anchor - Date.parse(r.createdDate || '') <= sevenDays).length;
+    const recency = recent / frequency;
+    const score = frequency * (1 + intensity) * (1 + recency * 0.5);
+    let severity = 'low';
+    if (share >= 0.3 || frequency >= 5) severity = 'high';
+    else if (share >= 0.15 || frequency >= 3) severity = 'medium';
+    const prev = prevClassified.filter((r) => r.polarity === 'negative' && !r.painCategories.length).length;
+    let trend = 'flat';
+    if (prev === 0 && frequency > 0) trend = 'new';
+    else if (frequency >= prev + 2 || frequency >= prev * 1.5) trend = 'up';
+    else if (frequency <= prev - 2 || frequency * 1.5 <= prev) trend = 'down';
+    themes.push({
+      type: 'pain',
+      category: 'other',
+      theme: 'Other complaints',
+      description: describePain('Other complaints', frequency, severity, avgRating),
+      frequency,
+      share: Number(share.toFixed(2)),
+      severity,
+      trend,
+      trendDelta: frequency - prev,
+      score: Number(score.toFixed(2)),
+      avgRating: Number(avgRating.toFixed(2)),
+      action: 'Read these individual complaints to catch emerging issues not yet covered by a theme.',
+      examples: pickQuotes(otherNeg),
+      quotes: pickQuotes(otherNeg, 6),
+    });
+  }
+
+  // Keep the catch-all last so specific, named themes stay on top.
+  return themes.sort(
+    (a, b) => (a.category === 'other') - (b.category === 'other') || b.score - a.score
+  );
 }
 
 function clusterPraise(classified) {
@@ -289,7 +331,30 @@ function clusterPraise(classified) {
       quotes: pickQuotes(bucket, 6),
     });
   }
-  return themes.sort((a, b) => b.frequency - a.frequency);
+
+  // Catch-all: positive reviews that praise something outside our keyword list
+  // (e.g. "performance improvements", "login speed improved") would otherwise be
+  // counted as positive yet never surface. Bucket them so they're not lost.
+  const otherPos = positives.filter((r) => !r.praiseCategories.length);
+  if (otherPos.length) {
+    themes.push({
+      type: 'praise',
+      category: 'other_good',
+      theme: 'Other positive feedback',
+      description: `Mentioned positively in ${otherPos.length} review(s) (${Math.round(
+        (otherPos.length / total) * 100
+      )}% of positive feedback) without fitting a specific theme.`,
+      frequency: otherPos.length,
+      share: Number((otherPos.length / total).toFixed(2)),
+      examples: pickQuotes(otherPos),
+      quotes: pickQuotes(otherPos, 6),
+    });
+  }
+
+  // Keep the catch-all last so specific, named themes stay on top.
+  return themes.sort(
+    (a, b) => (a.category === 'other_good') - (b.category === 'other_good') || b.frequency - a.frequency
+  );
 }
 
 function describePain(label, frequency, severity, avgRating) {
@@ -369,10 +434,10 @@ const LANGUAGE_NAMES = {
   nl: 'Dutch',
 };
 
-export function reportLanguage() {
-  const raw = (process.env.REPORT_LANGUAGE || 'en').toLowerCase().trim();
+export function reportLanguage(override) {
+  const raw = (override || process.env.REPORT_LANGUAGE || 'en').toLowerCase().trim();
   const code = raw.slice(0, 2);
-  return { code, name: LANGUAGE_NAMES[code] || process.env.REPORT_LANGUAGE || 'English' };
+  return { code, name: LANGUAGE_NAMES[code] || override || process.env.REPORT_LANGUAGE || 'English' };
 }
 
 function buildRefineSystem(languageName) {
@@ -438,8 +503,8 @@ function safeParseJson(text) {
   }
 }
 
-async function refineWithLlm(month, painThemes, praiseThemes) {
-  const { name: languageName } = reportLanguage();
+async function refineWithLlm(month, painThemes, praiseThemes, lang) {
+  const languageName = (lang && lang.name) || reportLanguage().name;
   const content = await llmComplete({
     system: buildRefineSystem(languageName),
     user: buildRefineUser(month, painThemes, praiseThemes),
@@ -481,9 +546,11 @@ async function refineWithLlm(month, painThemes, praiseThemes) {
  * @param {Array}   opts.reviews          Reviews for the month.
  * @param {Array}   [opts.previousReviews] Previous month's reviews (for trends).
  * @param {boolean} [opts.useLlm]         Allow the LLM refine skill (default: auto).
+ * @param {string}  [opts.language]        Output language override (e.g. "en", "de").
  * @returns enriched report (backward compatible with the old shape).
  */
-export async function analyzeReviews({ month, reviews, previousReviews = [], useLlm } = {}) {
+export async function analyzeReviews({ month, reviews, previousReviews = [], useLlm, language } = {}) {
+  const lang = reportLanguage(language);
   const stats = computeStats(reviews);
   const skillsRun = ['classify', 'cluster', 'score', 'trend', 'quote', 'recommend'];
 
@@ -497,7 +564,7 @@ export async function analyzeReviews({ month, reviews, previousReviews = [], use
       praises: [],
       suggestedActions: [],
       categories: [],
-      agent: { skills: skillsRun, llm: false },
+      agent: { skills: skillsRun, llm: false, language: lang.code },
     };
   }
 
@@ -515,7 +582,7 @@ export async function analyzeReviews({ month, reviews, previousReviews = [], use
   const wantLlm = useLlm ?? llmConfigured();
   if (wantLlm && (painThemes.length || praiseThemes.length)) {
     try {
-      const refined = await refineWithLlm(month, painThemes, praiseThemes);
+      const refined = await refineWithLlm(month, painThemes, praiseThemes, lang);
       if (refined) {
         painThemes = refined.pain;
         praiseThemes = refined.praise;
@@ -548,7 +615,7 @@ export async function analyzeReviews({ month, reviews, previousReviews = [], use
     praises: praiseThemes.slice(0, 6).map(stripInternal),
     suggestedActions,
     categories,
-    agent: { skills: skillsRun, llm: llmUsed, language: reportLanguage().code },
+    agent: { skills: skillsRun, llm: llmUsed, language: lang.code },
   };
   if (note) report.note = note;
   return report;
