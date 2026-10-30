@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Swisscard · Device Mockups</title>
+    <style>
+      :root {
+        --brand: #4f8cff;
+        --bg: #0a0f17;
+        --panel: #131c2b;
+        --panel-2: #182233;
+        --ink: #e9eef6;
+        --muted: #9aa9bd;
+        --line: rgba(255, 255, 255, 0.07);
+        --good: #34d399;
+        --star: #f5b301;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background:
+          radial-gradient(1200px 600px at 20% -10%, rgba(79, 140, 255, 0.18), transparent 60%),
+          radial-gradient(900px 500px at 100% 0%, rgba(51, 83, 110, 0.25), transparent 55%),
+          #06090f;
+        color: var(--ink);
+        min-height: 100vh;
+        padding: 64px 40px;
+      }
+      .page-head { text-align: center; margin-bottom: 56px; }
+      .page-head .logo {
+        width: 46px; height: 46px; border-radius: 12px;
+        background: linear-gradient(160deg, #4f8cff, #33536e);
+        display: inline-flex; align-items: center; justify-content: center;
+        font-weight: 800; color: #fff; font-size: 18px;
+        box-shadow: 0 10px 30px rgba(79, 140, 255, 0.35);
+        vertical-align: middle; margin-right: 12px;
+      }
+      .page-head h1 { display: inline-block; font-size: 26px; margin: 0; vertical-align: middle; letter-spacing: -0.01em; }
+      .page-head p { color: var(--muted); margin: 14px 0 0; font-size: 14px; }
+
+      .stage {
+        display: flex; gap: 64px; align-items: center; justify-content: center;
+        flex-wrap: wrap; max-width: 1500px; margin: 0 auto;
+      }
+      .device-label { text-align: center; color: var(--muted); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 22px; }
+
+      /* ============ MacBook ============ */
+      .macbook { width: 880px; max-width: 100%; }
+      .mb-screen {
+        background: #050608;
+        border: 2px solid #2a2f37;
+        border-radius: 22px 22px 6px 6px;
+        padding: 14px;
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.55), inset 0 0 0 2px #0c0e12;
+      }
+      .mb-camera { width: 6px; height: 6px; border-radius: 50%; background: #1c2129; margin: 0 auto 8px; box-shadow: inset 0 0 2px #000; }
+      .mb-viewport { border-radius: 8px; overflow: hidden; background: var(--bg); aspect-ratio: 16 / 10; }
+      .mb-base {
+        position: relative;
+        height: 22px; width: 106%; margin-left: -3%;
+        background: linear-gradient(#c2c8d2, #9aa1ad 55%, #7f8794);
+        border-radius: 0 0 14px 14px;
+        box-shadow: 0 18px 26px rgba(0, 0, 0, 0.45);
+      }
+      .mb-base::after {
+        content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        width: 130px; height: 10px; background: #80868f;
+        border-radius: 0 0 10px 10px;
+      }
+
+      /* ============ iPhone ============ */
+      .iphone { width: 320px; }
+      .ip-frame {
+        background: #0b0d11;
+        border: 11px solid #1b1f27;
+        border-radius: 50px;
+        padding: 0;
+        position: relative;
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.55), inset 0 0 0 2px #000;
+        overflow: hidden;
+        aspect-ratio: 9 / 19.5;
+      }
+      .ip-notch {
+        position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+        width: 110px; height: 28px; background: #000; border-radius: 16px; z-index: 5;
+      }
+      .ip-viewport { height: 100%; overflow: hidden; background: var(--bg); }
+
+      /* ============ Shared app UI ============ */
+      .app { background: var(--bg); color: var(--ink); height: 100%; overflow: hidden; }
+
+      .topbar {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 18px; border-bottom: 1px solid var(--line);
+        gap: 12px;
+      }
+      .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+      .brand .ic {
+        width: 34px; height: 34px; border-radius: 9px; flex: none;
+        background: linear-gradient(160deg, #4f8cff, #33536e);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800; color: #fff; font-size: 13px;
+      }
+      .brand h2 { margin: 0; font-size: 15px; line-height: 1.1; }
+      .brand h2 .sub { color: var(--muted); font-weight: 500; margin-left: 7px; font-size: 12px; }
+      .brand .tag { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
+
+      .nav { display: flex; gap: 8px; align-items: center; flex: none; }
+      .btn-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        border: 1px solid var(--line); background: var(--panel-2);
+        color: var(--ink); border-radius: 999px; padding: 7px 12px; font-size: 11.5px; white-space: nowrap;
+      }
+      .hamb { display: flex; flex-direction: column; gap: 3px; padding: 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); }
+      .hamb span { width: 16px; height: 2px; background: var(--ink); border-radius: 2px; }
+
+      .body { padding: 18px; }
+
+      .syncbar {
+        display: flex; align-items: center; gap: 12px;
+        background: var(--panel); border: 1px solid var(--line);
+        border-radius: 14px; padding: 14px 16px;
+      }
+      .btn-primary { background: var(--brand); color: #fff; border: none; border-radius: 9px; padding: 9px 16px; font-size: 13px; font-weight: 600; }
+      .chip { border: 1px solid var(--line); background: var(--panel-2); color: var(--muted); border-radius: 8px; padding: 7px 11px; font-size: 12px; }
+
+      .synced { color: var(--muted); font-size: 12.5px; margin: 14px 2px 0; }
+
+      .tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin: 16px 0 0; }
+      .tab { padding: 12px 2px; font-size: 13.5px; color: var(--muted); border-bottom: 2px solid transparent; }
+      .tab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+
+      .card {
+        background: var(--panel); border: 1px solid var(--line);
+        border-radius: 16px; padding: 18px 20px; margin-top: 18px;
+      }
+      .card h3 { margin: 0 0 8px; font-size: 15px; }
+      .card .desc { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 0 0 16px; }
+      .card .desc b { color: var(--ink); }
+
+      .stat-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .stat {
+        border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; background: var(--panel-2);
+      }
+      .stat .l { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+      .stat .v { font-size: 30px; font-weight: 800; margin-top: 8px; }
+      .stat .v .star { color: var(--star); }
+
+      .subnote { color: var(--muted); font-size: 12px; margin: 14px 2px 0; }
+      .subnote b { color: var(--ink); }
+      .disclosure { color: var(--muted); font-size: 12.5px; margin: 12px 2px 0; }
+
+      /* delta cards */
+      .deltas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 4px; }
+      .delta { border: 1px solid var(--line); border-left: 3px solid var(--good); border-radius: 12px; padding: 12px 14px; background: var(--panel-2); }
+      .delta .when { color: var(--muted); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+      .delta .big { color: var(--good); font-size: 24px; font-weight: 800; margin: 4px 0 2px; }
+      .delta .meta { color: var(--muted); font-size: 10.5px; line-height: 1.4; }
+
+      table.stars { width: 100%; border-collapse: collapse; margin-top: 14px; }
+      table.stars th { color: var(--muted); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; text-align: right; padding: 8px 6px; font-weight: 600; }
+      table.stars th:first-child { text-align: left; }
+      table.stars td { padding: 9px 6px; border-top: 1px solid var(--line); font-size: 13px; text-align: right; }
+      table.stars td:first-child { text-align: left; color: var(--star); letter-spacing: 1px; }
+      table.stars td.pos { color: var(--good); font-weight: 600; }
+      table.stars td.zero { color: var(--muted); }
+      table.stars tr.total td { font-weight: 700; color: var(--ink); }
+      table.stars tr.total td.pos { color: var(--good); }
+      .when-sub { color: var(--muted); font-size: 9px; display: block; text-transform: none; letter-spacing: 0; }
+
+      .release-note { color: var(--muted); font-size: 11.5px; margin-top: 14px; line-height: 1.5; }
+
+      @media (max-width: 980px) {
+        .stage { gap: 48px; }
+        .macbook { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-head">
+      <span class="logo">SC</span>
+      <h1>Swisscard · App Ratings Analyzer</h1>
+      <p>Device mockups — desktop (German) &amp; mobile (English)</p>
+    </div>
+
+    <div class="stage">
+      <!-- ===================== MACBOOK ===================== -->
+      <div>
+        <div class="macbook">
+          <div class="mb-screen">
+            <div class="mb-camera"></div>
+            <div class="mb-viewport">
+              <div class="app">
+                <div class="topbar">
+                  <div class="brand">
+                    <span class="ic">SC</span>
+                    <div>
+                      <h2>Swisscard <span class="sub">App-Bewertungs-Analyse</span></h2>
+                      <p class="tag">Kundenrezensionen über die App Store Connect API</p>
+                    </div>
+                  </div>
+                  <div class="nav">
+                    <span class="btn-pill">🌐 Auf Englisch wechseln</span>
+                    <span class="btn-pill">🌙 Zu Hell wechseln</span>
+                    <span class="btn-pill">⎋ Abmelden</span>
+                  </div>
+                </div>
+
+                <div class="body">
+                  <div class="syncbar">
+                    <button class="btn-primary">Synchronisieren</button>
+                    <span class="chip">KI: groq (llama-3.3-70b-versatile) · kostenlos</span>
+                  </div>
+                  <div class="synced">Letzte Synchronisierung vor 2 Std. · 1 abgerufen, 0 neu · 5 schriftliche Rezension(en) in 2026-06.</div>
+
+                  <div class="tabs">
+                    <div class="tab active">Bewertungen &amp; Rezensionen</div>
+                    <div class="tab">Downloads &amp; Verbreitung</div>
+                  </div>
+
+                  <div class="card">
+                    <h3>Bewertungsübersicht (alle Stores)</h3>
+                    <p class="desc">Gesamtwerte aus dem öffentlichen App Store, inklusive <b>reiner Sternebewertungen</b> (die die Rezensions-API nie zurückgibt).</p>
+                    <div class="stat-2">
+                      <div class="stat"><div class="l">Bewertungen gesamt</div><div class="v">27,413</div></div>
+                      <div class="stat"><div class="l">Durchschnittsbewertung</div><div class="v">4.58 <span class="star">★</span></div></div>
+                    </div>
+                    <div class="subnote"><b>Schriftliche Rezensionen:</b> 23 &nbsp;&nbsp; Nur Sterne (ca.): <b>27,390</b> &nbsp;&nbsp; Aus 68/181 Stores · zwischengespeichert</div>
+                    <div class="disclosure">▶ Top-Stores nach Bewertungen</div>
+                  </div>
+
+                  <div class="card">
+                    <h3>Bewertungen im Zeitverlauf</h3>
+                    <p class="desc">Veränderung der Gesamtbewertungen gegenüber früheren Snapshots. Neue Tages-Snapshots werden automatisch erfasst, sodass mit der Zeit mehr Zeiträume verfügbar werden.</p>
+                    <div class="deltas">
+                      <div class="delta"><div class="when">vs. 26. Juni 2026</div><div class="big">+10</div><div class="meta">+0% · ±0,00★ Ø<br>vs. gestern · 1T · ~10/Tag</div></div>
+                      <div class="delta"><div class="when">vs. 18. Juni 2026</div><div class="big">+42</div><div class="meta">+0.2% · ±0,00★ Ø<br>vs. letzter Woche · 9T · ~4.7/Tag</div></div>
+                      <div class="delta"><div class="when">vs. 13. Jan. 2026</div><div class="big">+755</div><div class="meta">+2.8% · ±0,00★ Ø<br>vs. Beginn · 165T · ~4.6/Tag</div></div>
+                    </div>
+
+                    <div class="subnote" style="margin-top:18px;">Hinzugekommene Bewertungen nach Sternen — Stichtag 27. Juni 2026 (neueste Sternverteilung)</div>
+                    <table class="stars">
+                      <thead>
+                        <tr>
+                          <th>Sterne</th>
+                          <th>vs. 26. Juni 2026 <span class="when-sub">vs. gestern</span></th>
+                          <th>vs. 18. Juni 2026 <span class="when-sub">vs. letzter Woche</span></th>
+                          <th>vs. 13. Jan. 2026 <span class="when-sub">vs. Beginn</span></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>★★★★★</td><td class="pos">+8</td><td class="pos">+37</td><td class="pos">+604</td></tr>
+                        <tr><td>★★★★</td><td class="pos">+1</td><td class="pos">+3</td><td class="pos">+73</td></tr>
+                        <tr><td>★★★</td><td class="zero">±0</td><td class="pos">+1</td><td class="pos">+23</td></tr>
+                        <tr><td>★★</td><td class="zero">±0</td><td class="zero">±0</td><td class="pos">+12</td></tr>
+                        <tr><td>★</td><td class="pos">+1</td><td class="pos">+1</td><td class="pos">+43</td></tr>
+                        <tr class="total"><td>Gesamt</td><td class="pos">+10</td><td class="pos">+42</td><td class="pos">+755</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="release-note">Sternengenaue Änderungen brauchen an beiden Enden eine Sternverteilung aus App-Store-Connect-Screenshots. Füge einen neuen ASC-Snapshot hinzu, um dies zu erweitern.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mb-base"></div>
+        </div>
+        <div class="device-label">MacBook · Desktop dashboard</div>
+      </div>
+
+      <!-- ===================== IPHONE ===================== -->
+      <div>
+        <div class="iphone">
+          <div class="ip-frame">
+            <div class="ip-notch"></div>
+            <div class="ip-viewport">
+              <div class="app">
+                <div class="topbar" style="padding-top:48px;">
+                  <div class="brand">
+                    <span class="ic">SC</span>
+                    <div>
+                      <h2 style="font-size:18px;">Swisscard</h2>
+                      <p class="tag" style="font-size:11px; max-width:170px;">Customer reviews via the App Store Connect API</p>
+                    </div>
+                  </div>
+                  <div class="hamb"><span></span><span></span><span></span></div>
+                </div>
+
+                <div class="body">
+                  <div class="syncbar" style="border-radius:14px;">
+                    <button class="btn-primary">Sync</button>
+                    <span class="chip" style="font-size:10.5px;">AI: groq (llama-3.3-70b-versatile) · free</span>
+                  </div>
+                  <div class="synced">Last sync 2h ago · 1 fetched, 0 new · 5 written review(s) in 2026-06.</div>
+
+                  <div class="tabs">
+                    <div class="tab active">Ratings &amp; reviews</div>
+                    <div class="tab">Downloads &amp; adoption</div>
+                  </div>
+
+                  <div class="card">
+                    <h3>Ratings overview (all storefronts)</h3>
+                    <p class="desc">All-time totals from the public App Store, including <b>star-only ratings</b> (which the written-reviews API never returns).</p>
+                    <div class="stat-2">
+                      <div class="stat"><div class="l">Total ratings (all-time)</div><div class="v">27,413</div></div>
+                      <div class="stat"><div class="l">Average rating</div><div class="v">4.58 <span class="star">★</span></div></div>
+                    </div>
+                    <div class="subnote"><b>Written reviews:</b> 23 &nbsp; Star-only (approx.): <b>27,390</b></div>
+                    <div class="subnote">From 68/181 storefronts · cached</div>
+                    <div class="disclosure">▶ Top storefronts by ratings</div>
+                  </div>
+
+                  <div class="card">
+                    <h3>Ratings over time</h3>
+                    <p class="desc" style="margin-bottom:0;">Change in total ratings vs. earlier stored snapshots. New daily snapshots are captured automatically, so&hellip;</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="device-label">iPhone · Mobile dashboard</div>
+      </div>
+    </div>
+  </body>
+</html>

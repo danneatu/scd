@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>App Ratings Analyzer — Demo Day Deck</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css" id="theme" />
+
+    <style>
+      :root {
+        --brand: #4f8cff;
+        --brand-2: #33536e;
+        --ink: #eaf0f7;
+        --muted: #9fb2c8;
+        --bg: #0d1622;
+        --panel: #14233a;
+        --panel-2: #1b2f4d;
+        --good: #34d399;
+        --bad: #f87171;
+        --warn: #fbbf24;
+      }
+
+      .reveal {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: var(--ink);
+      }
+      .reveal .slides { text-align: left; }
+      .reveal .slides section { height: 100%; }
+
+      .reveal h1, .reveal h2, .reveal h3 { color: #fff; text-transform: none; letter-spacing: -0.01em; line-height: 1.08; }
+      .reveal h1 { font-size: 2.5em; font-weight: 800; }
+      .reveal h2 { font-size: 1.7em; font-weight: 800; }
+      .reveal h3 { font-size: 1.05em; font-weight: 700; }
+      .reveal p, .reveal li { color: var(--ink); }
+      .reveal .muted { color: var(--muted); }
+      .reveal strong { color: #fff; }
+      .reveal a { color: var(--brand); }
+
+      .reveal section::backdrop { background: var(--bg); }
+      .reveal .backgrounds { background: var(--bg); }
+
+      .kicker {
+        display: inline-block;
+        font-size: 0.5em;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--brand);
+        background: rgba(79, 140, 255, 0.12);
+        border: 1px solid rgba(79, 140, 255, 0.35);
+        padding: 6px 12px;
+        border-radius: 999px;
+        margin-bottom: 18px;
+      }
+
+      .lead { font-size: 1.15em; color: var(--muted); max-width: 22ch; }
+
+      .grid { display: grid; gap: 18px; }
+      .grid.cols-2 { grid-template-columns: 1fr 1fr; }
+      .grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+      .card {
+        background: linear-gradient(180deg, var(--panel), var(--panel-2));
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 20px 22px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+      }
+      .card h3 { margin: 6px 0 6px; }
+      .card p { font-size: 0.72em; color: var(--muted); margin: 0; line-height: 1.45; }
+
+      .icon {
+        width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 10px; background: rgba(79, 140, 255, 0.14); color: var(--brand);
+      }
+      .icon svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+      .pill { display:inline-block; font-size: 0.62em; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color: var(--muted); margin: 3px 4px 3px 0; }
+
+      .stat-row { display:flex; gap: 28px; flex-wrap: wrap; margin-top: 8px; }
+      .stat .n { font-size: 1.9em; font-weight: 800; color:#fff; line-height:1; }
+      .stat .l { font-size: 0.62em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+      .reveal ul.clean { list-style: none; margin-left: 0; }
+      .reveal ul.clean li { position: relative; padding-left: 30px; margin-bottom: 14px; font-size: 0.86em; line-height: 1.4; }
+      .reveal ul.clean li::before {
+        content: ""; position: absolute; left: 0; top: 7px; width: 16px; height: 16px;
+        background: var(--brand); border-radius: 5px; opacity: 0.85;
+      }
+      .reveal ul.split li::before { background: var(--good); }
+      .reveal ul.pain li::before { background: var(--bad); }
+
+      .twocol { display:grid; grid-template-columns: 1.05fr 0.95fr; gap: 34px; align-items: start; }
+
+      .titlewrap { display:flex; flex-direction:column; justify-content:center; height: 100%; }
+      .brandbar { display:flex; align-items:center; gap: 16px; margin-bottom: 26px; }
+      .logo {
+        width: 64px; height: 64px; border-radius: 16px;
+        background: linear-gradient(160deg, #4f8cff, #33536e);
+        display:flex; align-items:center; justify-content:center;
+        font-weight: 800; color:#fff; font-size: 1.5em; box-shadow: 0 10px 30px rgba(79,140,255,0.35);
+      }
+
+      /* Architecture diagram */
+      .arch { display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: stretch; font-size: 0.6em; }
+      .arch .col { display:flex; flex-direction:column; gap: 10px; }
+      .arch .colhead { font-size: 0.95em; text-transform: uppercase; letter-spacing: 0.1em; color: var(--brand); font-weight: 700; margin-bottom: 2px; }
+      .node {
+        background: var(--panel-2); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+        padding: 10px 12px; color: var(--ink); line-height: 1.25;
+      }
+      .node.brand { border-color: rgba(79,140,255,0.5); background: rgba(79,140,255,0.12); }
+      .node.ai { border-color: rgba(52,211,153,0.4); }
+      .node small { color: var(--muted); display:block; font-size: 0.82em; }
+      .flowlabel { text-align:center; font-size: 0.55em; color: var(--muted); margin-top: 16px; }
+
+      .reveal .footnote { position: absolute; bottom: 18px; left: 60px; font-size: 0.42em; color: var(--muted); }
+      .reveal .slide-number { font-size: 0.5em; color: var(--muted); }
+
+      .tag-good { color: var(--good); font-weight: 700; }
+      .tag-bad { color: var(--bad); font-weight: 700; }
+      .tag-warn { color: var(--warn); font-weight: 700; }
+
+      .solve { font-size: 0.74em; color: var(--good); display:block; margin-top: 6px; }
+      .solve::before { content: "→ "; color: var(--good); }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+
+        <!-- ============ SLIDE 1 — OVERVIEW ============ -->
+        <section data-auto-animate>
+          <div class="titlewrap">
+            <div class="brandbar">
+              <div class="logo">SC</div>
+              <span class="kicker" style="margin:0">Demo Day · App Analytics</span>
+            </div>
+            <h1>App Ratings Analyzer</h1>
+            <p class="lead" style="max-width:34ch; margin-top:14px;">
+              One private dashboard that turns scattered App Store signals into
+              <strong>"what users hate vs. what they love."</strong>
+            </p>
+
+            <div class="grid cols-3" style="margin-top:30px;">
+              <div class="card">
+                <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/></svg></span>
+                <h3>The problem</h3>
+                <p>Reviews, star ratings &amp; downloads live in 3 disconnected Apple sources — and the per-star split has no API at all.</p>
+              </div>
+              <div class="card">
+                <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"/></svg></span>
+                <h3>The solution</h3>
+                <p>A self-hosted Node app that consolidates everything, stores it, and auto-generates a monthly insight report.</p>
+              </div>
+              <div class="card">
+                <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></svg></span>
+                <h3>Business value</h3>
+                <p>Product teams see pain points early — no SaaS fees, no private key in the browser, data stays yours.</p>
+              </div>
+            </div>
+          </div>
+          <aside class="notes">
+            Open with the one-liner: "Every product team drowns in App Store feedback but can't see the signal."
+            This tool pulls an app's reviews, ratings and downloads into a single private dashboard and tells you,
+            each month, the biggest pain points versus what users love. Motivation: I wanted Mixpanel-style insight
+            for App Store feedback without paying a SaaS, and without ever exposing Apple's signing key to a browser.
+            Business value in one breath: catch problems early, keep your data, zero recurring cost. (~55s)
+          </aside>
+        </section>
+
+        <!-- ============ SLIDE 2 — KEY FEATURES ============ -->
+        <section>
+          <span class="kicker">What it does</span>
+          <h2>Key features</h2>
+          <div class="grid cols-3" style="margin-top:22px;">
+            <div class="card">
+              <span class="icon"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></span>
+              <h3>Daily auto-sync</h3>
+              <p>Incremental pull of new reviews (stops at a cutoff date), deduped by ID into the database.</p>
+            </div>
+            <div class="card ai">
+              <span class="icon" style="background:rgba(52,211,153,.14);color:var(--good)"><svg viewBox="0 0 24 24"><path d="M12 3l2 4 4 .5-3 3 .7 4.2L12 16l-3.7 2.2.7-4.2-3-3 4-.5z"/></svg></span>
+              <h3>AI insight report</h3>
+              <p>Themed pain-points &amp; praise with example quotes — LLM when configured, local heuristic otherwise.</p>
+            </div>
+            <div class="card">
+              <span class="icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="12" y="6" width="3" height="11"/><rect x="17" y="13" width="3" height="4"/></svg></span>
+              <h3>Ratings over time</h3>
+              <p>All-time total &amp; average across storefronts, incl. star-only ratings the reviews API omits.</p>
+            </div>
+            <div class="card">
+              <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></span>
+              <h3>Downloads &amp; adoption</h3>
+              <p>Install totals + per-country breakdown + latest-version adoption from Sales Reports.</p>
+            </div>
+            <div class="card">
+              <span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg></span>
+              <h3>Screenshot OCR</h3>
+              <p>Reads the per-star breakdown off an ASC screenshot locally (Tesseract) — the only way to get that data.</p>
+            </div>
+            <div class="card">
+              <span class="icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H5.2L4 17.5z"/></svg></span>
+              <h3>Alerts &amp; export</h3>
+              <p>Email on new reviews (Resend/SMTP), EN/DE UI, password login, one-click PDF export.</p>
+            </div>
+          </div>
+          <aside class="notes">
+            Don't read every card — group them. "Three pillars: it collects, it analyzes, it alerts."
+            Collect: daily incremental sync, plus ratings and downloads from two more Apple sources.
+            Analyze: the headline feature — a monthly themed report of pain points vs. praise with real quotes.
+            The clever bit: Apple gives no per-star API, so we OCR the App Store Connect screenshot locally.
+            Alert: email notifications, PDF export, bilingual UI. The point: it's not a dump of numbers, it's an
+            opinion about what to fix next. (~60s)
+          </aside>
+        </section>
+
+        <!-- ============ SLIDE 3 — ARCHITECTURE ============ -->
+        <section>
+          <span class="kicker">How it fits together</span>
+          <h2>Technical architecture</h2>
+
+          <div class="arch" style="margin-top:18px;">
+            <div class="col">
+              <div class="colhead">Apple sources</div>
+              <div class="node">customerReviews API <small>JWT ES256, paginated</small></div>
+              <div class="node">iTunes lookup <small>ratings · version</small></div>
+              <div class="node">Sales Reports <small>gzip TSV · Sales key</small></div>
+            </div>
+            <div class="col">
+              <div class="colhead">Backend · Node/Express</div>
+              <div class="node brand">server.js <small>~15 REST endpoints + server-side signing</small></div>
+              <div class="node">sync · incremental fetch</div>
+              <div class="node ai">insights + llm.js <small>multi-provider · heuristic fallback</small></div>
+              <div class="node">ratingsOcr.js <small>Tesseract (local)</small></div>
+            </div>
+            <div class="col">
+              <div class="colhead">Data layer</div>
+              <div class="node">db.js facade <small>one async API, lazy driver</small></div>
+              <div class="node">SQLite <small>node:sqlite · local</small></div>
+              <div class="node">Postgres / Supabase <small>production</small></div>
+              <div class="node">node-cron / GitHub Actions <small>daily job</small></div>
+            </div>
+            <div class="col">
+              <div class="colhead">Frontend</div>
+              <div class="node brand">HTML / CSS / JS <small>no build step</small></div>
+              <div class="node">Tabs · EN/DE i18n</div>
+              <div class="node">Skeleton loaders · PDF</div>
+              <div class="node">Password login + cookie</div>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;">
+            <span class="pill">Node ≥22 (built-in fetch)</span>
+            <span class="pill">Express</span>
+            <span class="pill">jsonwebtoken · ES256</span>
+            <span class="pill">pg / node:sqlite</span>
+            <span class="pill">node-cron</span>
+            <span class="pill">tesseract.js</span>
+            <span class="pill">nodemailer / Resend</span>
+            <span class="pill">Groq · OpenAI · Gemini · Ollama</span>
+          </div>
+          <div class="flowlabel">Data flow: Apple → sync → DB → insights/LLM → REST → dashboard &nbsp;·&nbsp; key signing stays server-side</div>
+
+          <aside class="notes">
+            Walk it left to right. Three Apple sources feed the Express backend. The backend signs every Apple
+            request with an ES256 JWT server-side — the private key never reaches the browser, which was a hard
+            requirement. The data layer is a facade: one async API, and a lazy driver picks SQLite locally or
+            Postgres/Supabase in production, so the unused database dependency never even loads. The AI layer is
+            pluggable — any OpenAI-compatible provider or a fully local heuristic. Frontend is deliberately
+            build-free: plain HTML/CSS/JS. The scheduler runs either in-process or on GitHub Actions so the free
+            host doesn't need to stay awake. (~60s)
+          </aside>
+        </section>
+
+        <!-- ============ SLIDE 4 — CHALLENGES ============ -->
+        <section>
+          <span class="kicker">Hard parts</span>
+          <h2>Challenges &amp; how they were solved</h2>
+          <div class="grid cols-2" style="margin-top:18px;">
+            <div class="card">
+              <h3>No per-star ratings API</h3>
+              <p>Apple exposes the average, never the 5★…1★ split.
+                 <span class="solve">Local Tesseract OCR of the ASC screenshot + a validated manual-snapshot endpoint.</span></p>
+            </div>
+            <div class="card">
+              <h3>Keep the signing key off the client</h3>
+              <p>A leaked .p8 key is account-wide.
+                 <span class="solve">All JWT signing is server-side; a boot guard refuses to start if key files are world-readable.</span></p>
+            </div>
+            <div class="card">
+              <h3>Free hosting sleeps</h3>
+              <p>Render free tier cold-starts and can't run a reliable cron.
+                 <span class="solve">Moved the daily job to GitHub Actions writing to Supabase; <code>DISABLE_CRON=1</code> avoids double runs.</span></p>
+            </div>
+            <div class="card">
+              <h3>Flaky &amp; varied data sources</h3>
+              <p>Sales data lags 1–2 days; the reviews key may be missing; LLMs differ per provider.
+                 <span class="solve">Graceful degradation everywhere + 6h caching; one code path for all OpenAI-compatible providers.</span></p>
+            </div>
+          </div>
+          <aside class="notes">
+            Four genuinely non-trivial problems. One: Apple simply has no per-star API, so I read it off a
+            screenshot with local OCR — never uploaded — and let the user confirm before saving. Two: security —
+            the signing key is account-wide, so signing is 100% server-side and the app won't even boot if the key
+            file has loose permissions. Three: the free host falls asleep and can't cron reliably, so the daily job
+            runs on GitHub Actions into Supabase, with a flag to prevent the in-process cron double-running. Four:
+            every data source can fail differently, so the whole app degrades gracefully — a missing review key
+            still lets you analyze stored data; no LLM key falls back to a local heuristic. (~60s)
+          </aside>
+        </section>
+
+        <!-- ============ SLIDE 5 — LESSONS LEARNED ============ -->
+        <section>
+          <span class="kicker">What I'd keep doing</span>
+          <h2>Lessons learned</h2>
+          <div class="twocol" style="margin-top:18px;">
+            <ul class="clean split">
+              <li><strong>Abstractions earn their keep.</strong> The DB facade made SQLite→Postgres a config flag, not a rewrite.</li>
+              <li><strong>Design for absent config.</strong> Every optional feature (LLM, Sales, email, auth) degrades instead of crashing.</li>
+              <li><strong>Validate at the edge.</strong> Bounded, sanitized payloads on write endpoints — defense-in-depth beyond parameterized queries.</li>
+            </ul>
+            <ul class="clean">
+              <li><strong>Pluggable AI &gt; one vendor.</strong> A single OpenAI-compatible path made swapping providers (incl. free Groq) trivial.</li>
+              <li><strong>Push scheduling to the platform.</strong> CI cron + managed DB beat fighting a free host's lifecycle.</li>
+              <li><strong>Boring frontend scales.</strong> No build step kept iteration fast and the deploy surface tiny.</li>
+            </ul>
+          </div>
+          <aside class="notes">
+            The biggest lesson: a small, well-placed abstraction pays for itself. The database facade turned a
+            scary "migrate to Postgres" into changing one environment variable. Second: treat missing configuration
+            as a first-class state — optional features should disappear quietly, not throw. Third on the AI side:
+            commit to an interface, not a vendor; the OpenAI-compatible shape let me use a free model in CI and a
+            paid one elsewhere with zero code change. And on operations — don't fight your host; let GitHub Actions
+            and Supabase own scheduling and state. Finally, a build-free frontend kept the whole thing fast to ship.
+            (~55s)
+          </aside>
+        </section>
+
+        <!-- ============ SLIDE 6 — RESULTS & FUTURE ============ -->
+        <section>
+          <span class="kicker">Where it stands</span>
+          <h2>Results &amp; what's next</h2>
+
+          <div class="stat-row" style="margin: 6px 0 22px;">
+            <div class="stat"><div class="n">3</div><div class="l">Apple sources unified</div></div>
+            <div class="stat"><div class="n">2</div><div class="l">DB drivers, one API</div></div>
+            <div class="stat"><div class="n">8+</div><div class="l">LLM providers supported</div></div>
+            <div class="stat"><div class="n">€0</div><div class="l">Hosting &amp; AI (free tier)</div></div>
+          </div>
+
+          <div class="grid cols-2">
+            <div class="card">
+              <h3 class="tag-good">Achieved today</h3>
+              <ul class="clean split" style="margin-top:6px;">
+                <li>Live, password-protected dashboard on Render + Supabase</li>
+                <li>Automated daily sync, snapshots &amp; AI report via CI</li>
+                <li>Reviews, ratings, downloads, adoption &amp; PDF export</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3 class="tag-warn">Path to production</h3>
+              <ul class="clean" style="margin-top:6px;">
+                <li>Multi-app &amp; multi-user (roles) instead of single app/password</li>
+                <li>Automated tests + typed schema for the data layer</li>
+                <li>Trend alerts (rating drops, spikes) &amp; webhook/Slack output</li>
+              </ul>
+            </div>
+          </div>
+
+          <p style="margin-top:22px; font-size:0.9em;">
+            <strong>Why it matters:</strong> it already replaces a paid analytics tool for one app — and the
+            clean seams (DB facade, pluggable AI, CI scheduling) make scaling to a real multi-tenant product a
+            roadmap, not a rewrite.
+          </p>
+
+          <aside class="notes">
+            Close with momentum. What's real today: a live, password-protected dashboard backed by Supabase, with
+            a daily CI job that syncs reviews, snapshots ratings, generates the AI report and emails new reviews —
+            covering reviews, ratings, downloads and adoption, all exportable to PDF, at zero hosting cost.
+            What's next to make it a product: multi-app and multi-user with roles, an automated test suite and a
+            typed schema, and proactive trend alerts to Slack. The strong finish: because the seams are clean —
+            the DB facade, the pluggable AI, CI-based scheduling — going multi-tenant is a roadmap, not a rewrite.
+            That's what makes this more than a demo. Thank you — happy to dive into any layer. (~60s)
+          </aside>
+        </section>
+
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        slideNumber: 'c/t',
+        transition: 'slide',
+        backgroundTransition: 'fade',
+        width: 1280,
+        height: 720,
+        margin: 0.06,
+        controls: true,
+        progress: true,
+        plugins: [RevealNotes],
+      });
+    </script>
+  </body>
+</html>
